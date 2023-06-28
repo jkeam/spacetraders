@@ -6,8 +6,12 @@ def main() -> int:
     hero = Hero()
     hero.init_from_file("data.yaml")
 
-    # get agent info
     hero.get_agent()
+    hero.get_headquarter_waypoints()
+
+    hero.get_contracts()
+    # hero.accept_all_contracts()
+
     return 0
 
 if __name__ == '__main__':
