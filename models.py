@@ -2,6 +2,20 @@ import http.client
 import yaml
 import json
 
+class Location:
+    """ Represents a location """
+    def __init__(self, coordinate:str) -> None:
+        data = coordinate.split("-")
+        self.sector = data[0]
+        self.system = f"{data[0]}-{data[1]}"
+        self.waypoint = coordinate
+        self.headquarters = None
+        self.account_id = None
+        self.credits = 0
+
+    def __str__(self) -> str:
+        return f"sector: {self.sector}, system: {self.system}, waypoint: {self.waypoint}"
+
 class Hero:
     """ Class representing the player """
 
@@ -51,6 +65,19 @@ class Hero:
             else:
                 print("Unable to get token")
 
+    def get_agent(self) -> dict:
+        """ Get agent info """
+        info = self._get_auth("my/agent")['data']
+        if self.debug:
+            print(info)
+
+        self.headquarters = Location(info['headquarters'])
+        self.account_id = info["accountId"]
+        self.credits = info["credits"]
+        if self.debug:
+            print(self.headquarters)
+        return info
+
     def _register(self) -> dict:
         return self._post_noauth("register", {"symbol": self.callsign, "faction": self.faction})
 
@@ -62,7 +89,7 @@ class Hero:
         if authenticated:
             headers["Authorization"] = f"Bearer {self.token}"
 
-        if data is not None:
+        if data is not None and len(data) > 0:
             conn.request(method, f"/v2/{path}", json.dumps(data), headers=headers)
         else:
             conn.request(method, f"/v2/{path}", headers=headers)
@@ -73,12 +100,15 @@ class Hero:
 
         raw_data = response.read()
         encoding = response.info().get_content_charset('utf8')
+        # error debugging
+        if self.debug and response.status != 200:
+            print(raw_data)
         return json.loads(raw_data.decode(encoding))
 
-    def _get_auth(self, path:str, data:dict) -> dict:
+    def _get_auth(self, path:str, data:dict = {}) -> dict:
         return self._call_endpoint("GET", True, path, data)
 
-    def _get_noauth(self, path:str, data:dict) -> dict:
+    def _get_noauth(self, path:str, data:dict = {}) -> dict:
         return self._call_endpoint("GET", False, path, data)
 
     def _post_auth(self, path:str, data:dict) -> dict:
