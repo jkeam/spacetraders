@@ -3,6 +3,7 @@ import yaml
 import json
 
 class Hero:
+    """ Class representing the player """
 
     def __init__(self):
         self.callsign = None
@@ -38,10 +39,10 @@ class Hero:
                 with open(filename, "w+") as stream:
                     try:
                         data = {
-                                "debug": self.debug,
-                                "callsign": self.callsign,
-                                "faction": self.faction,
-                                "token": self.token
+                                 "debug": self.debug,
+                                 "callsign": self.callsign,
+                                 "faction": self.faction,
+                                 "token": self.token
                                }
                         stream.write(yaml.dump(data))
                     except yaml.YAMLError as exc:
@@ -50,16 +51,13 @@ class Hero:
             else:
                 print("Unable to get token")
 
-    def _register(self):
+    def _register(self) -> dict:
         return self._post_noauth("register", {"symbol": self.callsign, "faction": self.faction})
 
     def _call_endpoint(self, method:str, authenticated:bool, path:str, data: dict) -> dict:
         host = "api.spacetraders.io"
         conn = http.client.HTTPSConnection(host)
-        headers = {
-                    "Host": host,
-                    "Content-Type": "application/json"
-                  }
+        headers = { "Host": host, "Content-Type": "application/json" }
 
         if authenticated:
             headers["Authorization"] = f"Bearer {self.token}"
@@ -68,6 +66,7 @@ class Hero:
             conn.request(method, f"/v2/{path}", json.dumps(data), headers=headers)
         else:
             conn.request(method, f"/v2/{path}", headers=headers)
+
         response = conn.getresponse()
         if self.debug:
             print(response.status, response.reason)
