@@ -1,5 +1,6 @@
 import http.client
 import yaml
+import json
 
 class Hero:
 
@@ -9,11 +10,10 @@ class Hero:
         self.token = None
         self.debug = False
 
-
     def __str__(self) -> str:
         return f"callsign: {self.callsign}\nfaction: {self.faction}\ntoken: {self.token}\ndebug: {self.debug}"
 
-    def init_from_file(self, filename):
+    def init_from_file(self, filename:str):
         with open(filename, "r") as stream:
             try:
                 obj = yaml.safe_load(stream)
@@ -27,43 +27,63 @@ class Hero:
                 print(exc)
                 print(f"Unable to read from file named {filename}")
 
+        # check for token
+        if self.token is None:
+            resp = self._register()
+            if self.debug:
+                print(resp)
+            self.token = resp.get("data", {}).get("token", None)
 
-    def write_to_file(self, filename):
-        data = {
-                 "callsign": self.callsign,
-                 "faction": self.faction,
-                 "token": self.token
-               }
+            if self.token is not None:
+                with open(filename, "w+") as stream:
+                    try:
+                        data = {
+                                "debug": self.debug,
+                                "callsign": self.callsign,
+                                "faction": self.faction,
+                                "token": self.token
+                               }
+                        stream.write(yaml.dump(data))
+                    except yaml.YAMLError as exc:
+                        print(exc)
+                        print(f"Unable to write to file named {filename}")
+            else:
+                print("Unable to get token")
 
-        # Write YAML file
-        with io.open(filename, 'w', encoding='utf8') as outfile:
-            yaml.dump(data, outfile, default_flow_style=False, allow_unicode=True)
+    def _register(self):
+        return self._post_noauth("register", {"symbol": self.callsign, "faction": self.faction})
 
-
-    def _call_endpoint(self, method, authenticated, path, data):
-        host = "https://api.spacetraders.io/v2"
+    def _call_endpoint(self, method:str, authenticated:bool, path:str, data: dict) -> dict:
+        host = "api.spacetraders.io"
         conn = http.client.HTTPSConnection(host)
         headers = {
                     "Host": host,
                     "Content-Type": "application/json"
                   }
+
         if authenticated:
             headers["Authorization"] = f"Bearer {self.token}"
 
-        conn.request(method, path, headers=headers)
+        if data is not None:
+            conn.request(method, f"/v2/{path}", json.dumps(data), headers=headers)
+        else:
+            conn.request(method, f"/v2/{path}", headers=headers)
         response = conn.getresponse()
         if self.debug:
             print(response.status, response.reason)
-        return response
 
-    def _get_auth(self, path, data):
+        raw_data = response.read()
+        encoding = response.info().get_content_charset('utf8')
+        return json.loads(raw_data.decode(encoding))
+
+    def _get_auth(self, path:str, data:dict) -> dict:
         return self._call_endpoint("GET", True, path, data)
 
-    def _get_noauth(self, path, data):
+    def _get_noauth(self, path:str, data:dict) -> dict:
         return self._call_endpoint("GET", False, path, data)
 
-    def _post_auth(self, path, data):
+    def _post_auth(self, path:str, data:dict) -> dict:
         return self._call_endpoint("POST", True, path, data)
 
-    def _post_noauth(self, path, data):
+    def _post_noauth(self, path:str, data:dict) -> dict:
         return self._call_endpoint("POST", False, path, data)
