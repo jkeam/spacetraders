@@ -11,6 +11,7 @@ def main() -> int:
 
     hero.get_contracts()
     # hero.accept_all_contracts()
+    hero.get_headquarter_ships()
 
     return 0
 

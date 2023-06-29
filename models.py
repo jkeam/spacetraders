@@ -69,6 +69,7 @@ class Waypoint(Location):
         self.x:int = loc["x"]
         self.y:int = loc["y"]
         self.orbitals = list(map(lambda o: Location(o["symbol"]), loc["orbitals"]))
+        self.traits = list(map(lambda t: WaypointTrait(t), loc["traits"]))
 
     def __str__(self) -> str:
         return f"location: {super().__str__()}, type: {self.type}, x: {self.x}, y: {self.y}, orbitals: {list(map(lambda o: o.__str__(), self.orbitals))}"
@@ -172,6 +173,29 @@ class Hero:
             for w in self.headquarter_waypoints:
                 print(w)
         return self.headquarter_waypoints
+
+    def get_headquarter_ships(self) -> dict:
+        """ Get all the ships from headquarter """
+        if len(self.headquarter_waypoints) == 0:
+            self.get_headquarter_waypoints()
+
+        shipyard:Waypoint|None = None
+        for w in self.headquarter_waypoints:
+            if shipyard is None:
+                for t in w.traits:
+                    if t.symbol == "SHIPYARD":
+                        shipyard = w
+
+        if shipyard is not None:
+            if self.debug:
+                print("Found Shipyard")
+                print(shipyard)
+            raw_ships = self._get_auth(f"systems/{self.headquarter.system}/waypoints/{shipyard.waypoint}/shipyard")["data"]
+            if self.debug:
+                print("Get Headquarter Ships")
+                print(raw_ships)
+            return raw_ships
+        return {}
 
     ## Helper
 
