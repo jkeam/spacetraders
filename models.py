@@ -48,10 +48,92 @@ class Spacetrader:
             print(raw_data)
         return json.loads(raw_data.decode(encoding))
 
+class ShipPoint:
+    """ Point of a route """
+    def __init__(self, point:dict) -> None:
+        self.symbol:str = point["symbol"]
+        self.type:str = point["type"]
+        self.system:str = point["systemSymbol"]
+        self.x:int = point["x"]
+        self.y:int = point["y"]
+
+    def __str__(self) -> str:
+        return f"symbol: {self.symbol}, type: {self.type}, system: {self.system}, x: {self.x}, y: {self.y}"
+
+class ShipRoute:
+    """ Ship route """
+    def __init__(self, route:dict) -> None:
+        self.departure = ShipPoint(route["departure"])
+        self.destination = ShipPoint(route["destination"])
+        self.arrival_at = dt.fromisoformat(route["arrival"])
+        self.departure_at = dt.fromisoformat(route["departureTime"])
+
+    def __str__(self) -> str:
+        return f"departure: {self.departure}, self.destination: {self.destination}, arrival_at: {self.arrival_at}, departure_at: {self.departure_at}"
+
+class ShipNav:
+    """ ShipNav """
+    def __init__(self, ship_nav:dict) -> None:
+        self.system:str = ship_nav["systemSymbol"]
+        self.waypoint = Location(ship_nav["waypointSymbol"])
+        self.route = ShipRoute(ship_nav["route"])
+        self.status:str = ship_nav["status"]
+        self.flight_mode:str = ship_nav["flightMode"]
+
+    def __str__(self) -> str:
+        return f"system: {self.system}, waypoint: {self.waypoint}, route: {self.route}, status: {self.route}, flight_mode: {self.flight_mode}"
+
+class ShipCrew:
+    """ Ship Crew """
+    def __init__(self, crew:dict) -> None:
+        self.current:int = crew["current"]
+        self.capacity:int = crew["capacity"]
+        self.required:int = crew["required"]
+        self.rotation:str = crew["rotation"]
+        self.morale:int = crew["morale"]
+        self.wages:int = crew["wages"]
+
+    def __str__(self) -> str:
+        return f"current: {self.current}, capacity: {self.capacity}, required: {self.required}, rotation: {self.rotation}, morale: {self.morale}, wages: {self.wages}"
+
+class ShipCargo:
+    """ Ship Cargo """
+    def __init__(self, cargo:dict) -> None:
+        self.capacity:int = cargo["capacity"]
+        self.units:int = cargo["units"]
+        self.inventory:list = cargo["inventory"]
+
+    def __str__(self) -> str:
+        return f"capacity: {self.capacity}, units: {self.units}, inventory: {self.inventory}"
+
+class ShipFuel:
+    """ Ship fuel """
+    def __init__(self, fuel: dict) -> None:
+        self.current:int = fuel["current"]
+        self.capacity:int = fuel["capacity"]
+        self.consumed:int = fuel["consumed"]["amount"]
+        self.consumed_at = dt.fromisoformat(fuel["consumed"]["timestamp"])
+
+    def __str__(self) -> str:
+        return f"current: {self.current}, capacity: {self.capacity}, consumed: {self.consumed}, consumed_at: {self.consumed_at}"
+
+class Ship:
+    """ Ship """
+    def __init__(self, ship:dict) -> None:
+        self.symbol:str = ship["symbol"]
+        self.nav = ShipNav(ship["nav"])
+        self.crew = ShipCrew(ship["crew"])
+        self.cargo = ShipCargo(ship["cargo"])
+        self.fuel = ShipFuel(ship["fuel"])
+        # missing frame, reactor, engine, modules, mounts, registration
+
+    def __str__(self) -> str:
+        return f"symbol: {self.symbol}, nav: {self.nav}, crew: {self.crew}, cargo: {self.cargo}, fuel: {self.fuel}"
+
 class ContractDelivery:
     """ The thing to deliver as described in the terms """
     def __init__(self, cont:dict) -> None:
-        self.trade = cont["tradeSymbol"]
+        self.trade:str = cont["tradeSymbol"]
         self.destination = cont["destinationSymbol"]
         self.units_required = cont["unitsRequired"]
         self.units_fulfilled = cont["unitsFulfilled"]
@@ -121,7 +203,6 @@ class Waypoint(Location):
 
 class Hero:
     """ Class representing the player """
-
     def __init__(self):
         self.callsign:str
         self.faction:str
@@ -134,6 +215,7 @@ class Hero:
         self.account_id:str
         self.credits:int
         self.api:Spacetrader
+        self.ships:list[Ship]
 
     def __str__(self) -> str:
         return f"callsign: {self.callsign}\nfaction: {self.faction}\ntoken: {self.token}\ndebug: {self.debug}"
@@ -195,9 +277,11 @@ class Hero:
     def get_my_ships(self) -> dict:
         """ Get my ships """
         info = self.api.get_auth("my/ships")["data"]
+        self.ships = list(map(lambda s: Ship(s), info))
         if self.debug:
             print("Get my ships")
-            print(info)
+            for s in self.ships:
+                print(s)
         return info
 
     def get_contracts(self) -> list[Contract]:
