@@ -2,6 +2,7 @@ import http.client
 import yaml
 import json
 from datetime import datetime as dt
+from time import sleep
 
 class Spacetrader:
     """ Represents the spacetracer API """
@@ -81,7 +82,7 @@ class ShipNav:
         self.flight_mode:str = ship_nav["flightMode"]
 
     def __str__(self) -> str:
-        return f"system: {self.system}, waypoint: {self.waypoint}, route: {self.route}, status: {self.route}, flight_mode: {self.flight_mode}"
+        return f"system: {self.system}, waypoint: {self.waypoint}, route: {self.route}, status: {self.status}, flight_mode: {self.flight_mode}"
 
 class ShipCrew:
     """ Ship Crew """
@@ -96,19 +97,34 @@ class ShipCrew:
     def __str__(self) -> str:
         return f"current: {self.current}, capacity: {self.capacity}, required: {self.required}, rotation: {self.rotation}, morale: {self.morale}, wages: {self.wages}"
 
+class ShipCargoItem:
+    """ Ship Cargo Item """
+    def __init__(self, item:dict) -> None:
+        self.symbol:str = item["symbol"]
+        self.name:str = item["name"]
+        self.description:str = item["description"]
+        self.units:int = item["units"]
+
+    def __str__(self) -> str:
+        return f"symbol: {self.symbol}, name: {self.name}, description: {self.description}, units: {self.units}"
+
 class ShipCargo:
     """ Ship Cargo """
     def __init__(self, cargo:dict) -> None:
         self.capacity:int = cargo["capacity"]
         self.units:int = cargo["units"]
-        self.inventory:list = cargo["inventory"]
+        self.inventory:list[ShipCargoItem] = list(map(lambda i: ShipCargoItem(i), cargo["inventory"]))
 
     def __str__(self) -> str:
-        return f"capacity: {self.capacity}, units: {self.units}, inventory: {self.inventory}"
+        return f"capacity: {self.capacity}, units: {self.units}, inventory: {list(map(lambda i: i.__str__(), self.inventory))}"
+
+    def is_full(self) -> bool:
+        """ Indicates if cargo is full """
+        return self.capacity == self.units
 
 class ShipFuel:
     """ Ship fuel """
-    def __init__(self, fuel: dict) -> None:
+    def __init__(self, fuel:dict) -> None:
         self.current:int = fuel["current"]
         self.capacity:int = fuel["capacity"]
         self.consumed:int = fuel["consumed"]["amount"]
@@ -117,26 +133,85 @@ class ShipFuel:
     def __str__(self) -> str:
         return f"current: {self.current}, capacity: {self.capacity}, consumed: {self.consumed}, consumed_at: {self.consumed_at}"
 
+class ShipFrame:
+    """ Type of Ship """
+    def __init__(self, frame:dict) -> None:
+        self.symbol:str = frame["symbol"]
+        self.name:str = frame["name"]
+        self.description:str = frame["description"]
+        self.module_slots:int = frame["moduleSlots"]
+        self.mounting_points:int = frame["mountingPoints"]
+        self.fuel_capacity:int = frame["fuelCapacity"]
+        self.condition:int = frame["condition"]
+        self.power_requirement:int = frame["requirements"]["power"]
+        self.crew_requirement:int = frame["requirements"]["crew"]
+
+    def __str__(self) -> str:
+        return f"symbol: {self.symbol}, name: {self.name}, description: {self.description}, module_slots: {self.module_slots}, mounting_points: {self.mounting_points}, fuel_capacity: {self.fuel_capacity}, condition: {self.condition}, power_requirement: {self.power_requirement}, crew_requirement: {self.crew_requirement}"
+
 class Ship:
     """ Ship """
-    def __init__(self, ship:dict) -> None:
+    def __init__(self, api:Spacetrader, ship:dict) -> None:
+        self.api = api
+        self.name:str = ship["registration"]["name"]
+        self.faction:str = ship["registration"]["factionSymbol"]
+        self.role:str = ship["registration"]["role"]
         self.symbol:str = ship["symbol"]
         self.nav = ShipNav(ship["nav"])
         self.crew = ShipCrew(ship["crew"])
         self.cargo = ShipCargo(ship["cargo"])
         self.fuel = ShipFuel(ship["fuel"])
-        # missing frame, reactor, engine, modules, mounts, registration
+        self.frame = ShipFrame(ship["frame"])
+        # missing reactor, engine, modules, mounts
 
     def __str__(self) -> str:
-        return f"symbol: {self.symbol}, nav: {self.nav}, crew: {self.crew}, cargo: {self.cargo}, fuel: {self.fuel}"
+        return f"name: {self.name}, faction: {self.faction}, role: {self.role}, symbol: {self.symbol}, nav: {self.nav}, crew: {self.crew}, cargo: {self.cargo}, fuel: {self.fuel}, frame: {self.frame}"
+
+    def cargo_is_full(self) -> bool:
+        """ Indicates if cargo is full """
+        return self.cargo.is_full()
+
+    def orbit(self) -> dict:
+        """ Bring ship into orbit """
+        return self.api.post_auth(f"my/ships/{self.symbol}/orbit")["data"]
+
+    def fly(self, destination_waypoint_symbol:str) -> dict:
+        """ Fly ship """
+        return self.api.post_auth(f"my/ships/{self.symbol}/navigate", {"waypointSymbol": destination_waypoint_symbol})["data"]
+
+    def dock(self) -> dict:
+        """ Dock ship """
+        return self.api.post_auth(f"my/ships/{self.symbol}/dock")
+
+    def refuel(self) -> dict:
+        """ Refuel ship """
+        return self.api.post_auth(f"my/ships/{self.symbol}/refuel")
+
+    def mine(self) -> dict:
+        """ Mine resources """
+        return self.api.post_auth(f"my/ships/{self.symbol}/extract")
+
+    def get_cargo(self) -> dict:
+        """ Get Cargo """
+        return self.api.get_auth(f"my/ships/{self.symbol}/cargo")
+
+    def view_market(self) -> dict:
+        """ View Market, only works if we are at an asteroid field """
+        return self.api.get_auth(f"systems/{self.nav.system}/waypoints/{self.nav.waypoint.waypoint}/market")
+
+    def sell_all_cargo(self, except_symbols:list[str]) -> None:
+        """ Sell all cargo """
+        for c in self.cargo.inventory:
+            if c.symbol not in except_symbols:
+                self.api.post_auth(f"my/ships/{self.symbol}/sell", {"symbol": c.symbol, "units": c.units})
 
 class ContractDelivery:
     """ The thing to deliver as described in the terms """
     def __init__(self, cont:dict) -> None:
         self.trade:str = cont["tradeSymbol"]
-        self.destination = cont["destinationSymbol"]
-        self.units_required = cont["unitsRequired"]
-        self.units_fulfilled = cont["unitsFulfilled"]
+        self.destination:str = cont["destinationSymbol"]
+        self.units_required:int = cont["unitsRequired"]
+        self.units_fulfilled:int = cont["unitsFulfilled"]
 
     def __str__(self) -> str:
         return f"trade: {self.trade}, destination: {self.destination}, units_required: {self.units_required}, units_fulfilled: {self.units_fulfilled}"
@@ -158,11 +233,11 @@ class Contract:
         self.id:str = cont["id"]
         self.faction:str = cont["factionSymbol"]
         self.type:str = cont["type"]
-        self.terms = ContractTerm(cont["terms"])
+        self.terms:ContractTerm = ContractTerm(cont["terms"])
         self.accepted:bool = cont["accepted"]
         self.fulfilled:bool = cont["fulfilled"]
-        self.expiration = dt.fromisoformat(cont["expiration"])
-        self.deadline = dt.fromisoformat(cont["deadlineToAccept"])
+        self.expiration:dt = dt.fromisoformat(cont["expiration"])
+        self.deadline:dt = dt.fromisoformat(cont["deadlineToAccept"])
 
     def __str__(self) -> str:
         return f"id: {self.id}, faction: {self.faction}, type: {self.type}, terms: {self.terms}, accepted: {self.accepted}, fulfilled: {self.fulfilled}, expiration: {self.expiration}, deadline: {self.deadline}"
@@ -171,9 +246,9 @@ class Location:
     """ Represents a location """
     def __init__(self, coordinate:str) -> None:
         data = coordinate.split("-")
-        self.sector = data[0]
-        self.system = f"{data[0]}-{data[1]}"
-        self.waypoint = coordinate
+        self.sector:str = data[0]
+        self.system:str = f"{data[0]}-{data[1]}"
+        self.waypoint:str = coordinate
 
     def __str__(self) -> str:
         return f"sector: {self.sector}, system: {self.system}, waypoint: {self.waypoint}"
@@ -195,8 +270,8 @@ class Waypoint(Location):
         self.type:str = loc["type"]
         self.x:int = loc["x"]
         self.y:int = loc["y"]
-        self.orbitals = list(map(lambda o: Location(o["symbol"]), loc["orbitals"]))
-        self.traits = list(map(lambda t: WaypointTrait(t), loc["traits"]))
+        self.orbitals:list[Location] = list(map(lambda o: Location(o["symbol"]), loc["orbitals"]))
+        self.traits:list[WaypointTrait] = list(map(lambda t: WaypointTrait(t), loc["traits"]))
 
     def __str__(self) -> str:
         return f"location: {super().__str__()}, type: {self.type}, x: {self.x}, y: {self.y}, orbitals: {list(map(lambda o: o.__str__(), self.orbitals))}"
@@ -207,7 +282,7 @@ class Hero:
         self.callsign:str
         self.faction:str
         self.token:str
-        self.debug = False
+        self.debug:bool = False
         self.contracts:list[Contract]
         self.headquarter_waypoints:list[Waypoint]
         self.headquarter:Location
@@ -277,9 +352,10 @@ class Hero:
     def get_my_ships(self) -> dict:
         """ Get my ships """
         info = self.api.get_auth("my/ships")["data"]
-        self.ships = list(map(lambda s: Ship(s), info))
+        self.ships = list(map(lambda s: Ship(self.api, s), info))
         if self.debug:
             print("Get my ships")
+            print(info)
             for s in self.ships:
                 print(s)
         return info
@@ -359,3 +435,121 @@ class Hero:
             print("Buy Headquarter Mining Drone")
             print(raw_purchase)
         return raw_purchase
+
+    def orbit(self, name:str) -> None:
+        """ orbit the ship with the matching name """
+        matching = self._find_ship_by_name(name)
+        if matching is not None:
+            if self.debug:
+                print("Orbit")
+            matching.orbit()
+
+    def fly(self, ship_name:str, destination_waypoint_symbol:str) -> None:
+        """ fly the particular ship with the matching name """
+        matching = self._find_ship_by_name(ship_name)
+        if matching is not None:
+            if self.debug:
+                print("Fly")
+            matching.fly(destination_waypoint_symbol)
+
+    def dock(self, ship_name:str) -> None:
+        """ Dock ship """
+        matching = self._find_ship_by_name(ship_name)
+        if matching is not None:
+            if self.debug:
+                print("Dock")
+            matching.dock()
+
+    def refuel(self, ship_name:str) -> None:
+        """ Refuel ship """
+        matching = self._find_ship_by_name(ship_name)
+        if matching is not None:
+            if self.debug:
+                print("Refuel")
+            matching.refuel()
+
+    def mine(self, ship_name:str) -> None:
+        """ Mine ship """
+        matching = self._find_ship_by_name(ship_name)
+        if matching is not None:
+            if self.debug:
+                print("Mine")
+            matching.mine()
+
+    def get_cargo(self, ship_name:str) -> ShipCargo|None:
+        """ Get cargo on ship """
+        matching = self._find_ship_by_name(ship_name)
+        if matching is not None:
+            if self.debug:
+                print("Get Cargo")
+            matching.get_cargo()
+            return matching.cargo
+        return None
+
+    def view_market(self, ship_name:str) -> dict:
+        """ View market """
+        """ FIXME, turn dict into object """
+        matching = self._find_ship_by_name(ship_name)
+        if matching is not None:
+            if self.debug:
+                print("View Market")
+            return matching.view_market()
+        return {}
+
+    def sell_all_cargo(self, ship_name:str, except_symbols:list[str] = []) -> None:
+        """ Sell all cargo """
+        matching = self._find_ship_by_name(ship_name)
+        if matching is not None:
+            matching.sell_all_cargo(except_symbols)
+
+    def cargo_is_full(self, ship_name:str) -> bool:
+        """ See if cargo is full """
+        matching = self._find_ship_by_name(ship_name)
+        if matching is not None:
+            return matching.cargo_is_full()
+        return False
+
+    def sell_all_cargo_for_ships(self, ship_names:list[str], goods_to_keep:list[str]) -> None:
+        """ Sell all cargo for ships """
+        for s in ship_names:
+            self.dock(s)
+            self.sell_all_cargo(s, goods_to_keep)
+        self.get_my_ships()  # refresh ship data
+
+    def send_ships_to_mine(self, ship_names:list[str]) -> None:
+        """ Send all ships to mine """
+        ship_name_to_done:dict[str, bool] = {}
+        for s in ship_names:
+            self.orbit(s)
+            ship_name_to_done[s] = False
+
+        done:bool = False
+        while not done:
+            done = True
+            for s in ship_names:
+                # not done yet
+                if self.debug:
+                    print(f"{s} done?: {ship_name_to_done[s]}")
+                if not ship_name_to_done[s]:
+                    if self.debug:
+                        print(f"{s} full?: {self.cargo_is_full(s)}")
+                    if self.cargo_is_full(s):
+                        # full, we are done
+                        ship_name_to_done[s] = True
+                    else:
+                        done = False  # must wait for this mine to finish
+                        self.mine(s)
+                else:
+                    if self.debug:
+                        print(f"{s} is done")
+            if not done:
+                sleep(100)
+            self.get_my_ships()  # refresh ship data
+
+    ## Helpers
+    def _find_ship_by_name(self, name:str) -> Ship|None:
+        all_matching = list(filter(lambda s: s.symbol == name, self.ships))
+        if len(all_matching) > 0:
+            return all_matching[0]
+        else:
+            return None
