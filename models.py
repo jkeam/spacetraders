@@ -50,6 +50,17 @@ class Spacetrader:
             print(raw_data)
         return json.loads(raw_data.decode(encoding))
 
+class Location:
+    """ Represents a location """
+    def __init__(self, coordinate:str) -> None:
+        data = coordinate.split("-")
+        self.sector:str = data[0]
+        self.system:str = f"{data[0]}-{data[1]}"
+        self.waypoint:str = coordinate
+
+    def __str__(self) -> str:
+        return f"Location(sector: {self.sector}, system: {self.system}, waypoint: {self.waypoint})"
+
 @dataclass
 class ShipPoint:
     """ Point of a route """
@@ -67,34 +78,14 @@ class ShipRoute:
     arrival_at:dt
     departure_at:dt
 
+@dataclass
 class ShipNav:
-    """ ShipNav """
-    def __init__(self, ship_nav:dict) -> None:
-        self.system:str = ship_nav["systemSymbol"]
-        self.waypoint = Location(ship_nav["waypointSymbol"])
-
-        route = ship_nav["route"]
-        departure = ShipPoint(
-                route["departure"]["symbol"],
-                route["departure"]["type"],
-                route["departure"]["systemSymbol"],
-                route["departure"]["x"],
-                route["departure"]["y"])
-        destination = ShipPoint(
-                route["destination"]["symbol"],
-                route["destination"]["type"],
-                route["destination"]["systemSymbol"],
-                route["destination"]["x"],
-                route["destination"]["y"])
-        arrival_at = dt.fromisoformat(route["arrival"])
-        departure_at = dt.fromisoformat(route["departureTime"])
-        self.route = ShipRoute(departure, destination, arrival_at, departure_at)
-
-        self.status:str = ship_nav["status"]
-        self.flight_mode:str = ship_nav["flightMode"]
-
-    def __str__(self) -> str:
-        return f"system: {self.system}, waypoint: {self.waypoint}, route: {self.route}, status: {self.status}, flight_mode: {self.flight_mode}"
+    """ Ship Nav """
+    system:str
+    waypoint:Location
+    route:ShipRoute
+    status:str
+    flight_mode:str
 
 @dataclass
 class ShipCrew:
@@ -114,15 +105,12 @@ class ShipCargoItem:
     description:str
     units:int
 
+@dataclass
 class ShipCargo:
-    """ Ship Cargo """
-    def __init__(self, cargo:dict) -> None:
-        self.capacity:int = cargo["capacity"]
-        self.units:int = cargo["units"]
-        self.inventory:list[ShipCargoItem] = list(map(lambda i: ShipCargoItem(i["symbol"], i["name"], i["description"], i["units"]), cargo["inventory"]))
-
-    def __str__(self) -> str:
-        return f"ShipCargo(capacity: {self.capacity}, units: {self.units}, inventory: {list(map(lambda i: i.__str__(), self.inventory))})"
+    """ Ship cargo """
+    capacity:int
+    units:int
+    inventory:list[ShipCargoItem]
 
     def is_full(self) -> bool:
         """ Indicates if cargo is full """
@@ -138,6 +126,7 @@ class ShipFuel:
 
 @dataclass
 class ShipFrame:
+    """ Ship frame """
     symbol:str
     name:str
     description:str
@@ -145,6 +134,48 @@ class ShipFrame:
     mounting_points:int
     fuel_capacity:int
     condition:int
+    power_requirement:int
+    crew_requirement:int
+
+@dataclass
+class ShipReactor:
+    """ Ship reactor """
+    symbol:str
+    name:str
+    description:str
+    condition:int
+    power_output:int
+    crew_requiremen:int
+
+@dataclass
+class ShipEngine:
+    """ Ship engine """
+    symbol:str
+    name:str
+    description:str
+    condition:int
+    speed:int
+    power_requirement:int
+    crew_requirement:int
+
+@dataclass
+class ShipModule:
+    """ Ship module """
+    symbol:str
+    name:str
+    description:str
+    capacity:int
+    power_requirement:int
+    crew_requirement:int
+    slot_requirement:int
+
+@dataclass
+class ShipMount:
+    """ Ship mount """
+    symbol:str
+    name:str
+    description:str
+    strength:int
     power_requirement:int
     crew_requirement:int
 
@@ -156,7 +187,7 @@ class Ship:
         self.faction:str = ship["registration"]["factionSymbol"]
         self.role:str = ship["registration"]["role"]
         self.symbol:str = ship["symbol"]
-        self.nav = ShipNav(ship["nav"])
+        self.nav = self._create_nav(ship["nav"])
         self.crew = ShipCrew(
                 ship["crew"]["current"],
                 ship["crew"]["capacity"],
@@ -164,7 +195,11 @@ class Ship:
                 ship["crew"]["rotation"],
                 ship["crew"]["morale"],
                 ship["crew"]["wages"])
-        self.cargo = ShipCargo(ship["cargo"])
+
+        self.cargo = ShipCargo(
+                ship["cargo"]["capacity"],
+                ship["cargo"]["units"],
+                list(map(lambda i: ShipCargoItem(i["symbol"], i["name"], i["description"], i["units"]), ship["cargo"]["inventory"])))
 
         self.fuel = ShipFuel(
                 ship["fuel"]["current"],
@@ -183,10 +218,54 @@ class Ship:
                 ship["frame"]["requirements"]["power"],
                 ship["frame"]["requirements"]["crew"])
 
-        # missing reactor, engine, modules, mounts
+        self.reactor = ShipReactor(
+                ship["reactor"]["symbol"],
+                ship["reactor"]["name"],
+                ship["reactor"]["description"],
+                ship["reactor"]["condition"],
+                ship["reactor"]["powerOutput"],
+                ship["reactor"]["requirements"]["crew"])
+
+        self.engine = ShipEngine(
+                ship["engine"]["symbol"],
+                ship["engine"]["name"],
+                ship["engine"]["description"],
+                ship["engine"]["condition"],
+                ship["engine"]["speed"],
+                ship["engine"]["requirements"]["power"],
+                ship["engine"]["requirements"]["crew"])
+
+        self.modules = list(map(lambda m: ShipModule(m["symbol"], m["name"], m["description"], m.get("capacity", 0), m["requirements"]["power"], m["requirements"]["crew"], m["requirements"]["slots"]), ship["modules"]))
+
+        self.mounts = list(map(lambda m: ShipMount(m["symbol"], m["name"], m["description"], m["strength"], m["requirements"]["power"], m["requirements"]["crew"]), ship["mounts"]))
 
     def __str__(self) -> str:
-        return f"Ship(name: {self.name}, faction: {self.faction}, role: {self.role}, symbol: {self.symbol}, nav: {self.nav}, crew: {self.crew}, cargo: {self.cargo}, fuel: {self.fuel}, frame: {self.frame})"
+        return f"Ship(name: {self.name}, faction: {self.faction}, role: {self.role}, symbol: {self.symbol}, nav: {self.nav}, crew: {self.crew}, cargo: {self.cargo}, fuel: {self.fuel}, frame: {self.frame}, modules: {list(map(lambda m: m.__str__(), self.modules))}), mounts: {list(map(lambda m: m.__str__(), self.mounts))})"
+
+    def _create_nav(self, ship_nav:dict) -> ShipNav:
+        system:str = ship_nav["systemSymbol"]
+        waypoint:Location = Location(ship_nav["waypointSymbol"])
+
+        route:dict = ship_nav["route"]
+        departure:ShipPoint = ShipPoint(
+                route["departure"]["symbol"],
+                route["departure"]["type"],
+                route["departure"]["systemSymbol"],
+                route["departure"]["x"],
+                route["departure"]["y"])
+        destination:ShipPoint = ShipPoint(
+                route["destination"]["symbol"],
+                route["destination"]["type"],
+                route["destination"]["systemSymbol"],
+                route["destination"]["x"],
+                route["destination"]["y"])
+        arrival_at = dt.fromisoformat(route["arrival"])
+        departure_at = dt.fromisoformat(route["departureTime"])
+        ship_route:ShipRoute = ShipRoute(departure, destination, arrival_at, departure_at)
+
+        status:str = ship_nav["status"]
+        flight_mode:str = ship_nav["flightMode"]
+        return ShipNav(system, waypoint, ship_route, status, flight_mode)
 
     def cargo_is_full(self) -> bool:
         """ Indicates if cargo is full """
@@ -234,16 +313,13 @@ class ContractDelivery:
     units_required:int
     units_fulfilled:int
 
+@dataclass
 class ContractTerm:
     """ Represents the terms of the contract """
-    def __init__(self, cont:dict) -> None:
-        self.deadline = dt.fromisoformat(cont["deadline"])
-        self.payment_on_accepted:int = cont["payment"]["onAccepted"]
-        self.payment_on_fulfilled:int= cont["payment"]["onFulfilled"]
-        self.deliveries = list(map(lambda d: ContractDelivery(d["tradeSymbol"], d["destinationSymbol"], d["unitsRequired"], d["unitsFulfilled"]), cont.get("deliver", [])))
-
-    def __str__(self) -> str:
-        return f"ContractTerm(deadline: {self.deadline}, payment_on_accepted: {self.payment_on_accepted}, payment_on_fulfilled: {self.payment_on_fulfilled}, deliveries: {list(map(lambda d: d.__str__(), self.deliveries))})"
+    deadline:dt
+    payment_on_accepted:int
+    payment_on_fulfilled:int
+    deliveries:list[ContractDelivery]
 
 class Contract:
     """ Represents a contract """
@@ -251,7 +327,10 @@ class Contract:
         self.id:str = cont["id"]
         self.faction:str = cont["factionSymbol"]
         self.type:str = cont["type"]
-        self.terms:ContractTerm = ContractTerm(cont["terms"])
+        self.terms:ContractTerm = ContractTerm(dt.fromisoformat(cont["terms"]["deadline"]),
+                                               cont["terms"]["payment"]["onAccepted"],
+                                               cont["terms"]["payment"]["onFulfilled"],
+                                               list(map(lambda d: ContractDelivery(d["tradeSymbol"], d["destinationSymbol"], d["unitsRequired"], d["unitsFulfilled"]), cont.get("terms", {}).get("deliver", []))))
         self.accepted:bool = cont["accepted"]
         self.fulfilled:bool = cont["fulfilled"]
         self.expiration:dt = dt.fromisoformat(cont["expiration"])
@@ -259,17 +338,6 @@ class Contract:
 
     def __str__(self) -> str:
         return f"Contract(id: {self.id}, faction: {self.faction}, type: {self.type}, terms: {self.terms}, accepted: {self.accepted}, fulfilled: {self.fulfilled}, expiration: {self.expiration}, deadline: {self.deadline})"
-
-class Location:
-    """ Represents a location """
-    def __init__(self, coordinate:str) -> None:
-        data = coordinate.split("-")
-        self.sector:str = data[0]
-        self.system:str = f"{data[0]}-{data[1]}"
-        self.waypoint:str = coordinate
-
-    def __str__(self) -> str:
-        return f"Location(sector: {self.sector}, system: {self.system}, waypoint: {self.waypoint})"
 
 @dataclass
 class WaypointTrait():
@@ -305,7 +373,7 @@ class Hero:
         self.account_id:str
         self.credits:int
         self.api:Spacetrader
-        self.ships:list[Ship]
+        self.ships_by_symbol:dict[str, Ship]
 
     def __str__(self) -> str:
         return f"Hero(callsign: {self.callsign}\nfaction: {self.faction}\ntoken: {self.token}\ndebug: {self.debug})"
@@ -367,11 +435,15 @@ class Hero:
     def get_my_ships(self) -> dict:
         """ Get my ships """
         info = self.api.get_auth("my/ships")["data"]
-        self.ships = list(map(lambda s: Ship(self.api, s), info))
+
+        ships = list(map(lambda s: Ship(self.api, s), info))
+        ship_keys = list(map(lambda s: s.symbol, ships))
+        self.ships_by_symbol = dict(zip(ship_keys, ships))
+
         if self.debug:
             print("Get my ships")
             print(info)
-            for s in self.ships:
+            for s in self.ships_by_symbol:
                 print(s)
         return info
 
@@ -563,8 +635,4 @@ class Hero:
 
     ## Helpers
     def _find_ship_by_name(self, name:str) -> Ship|None:
-        all_matching = list(filter(lambda s: s.symbol == name, self.ships))
-        if len(all_matching) > 0:
-            return all_matching[0]
-        else:
-            return None
+        return self.ships_by_symbol.get(name, None)
