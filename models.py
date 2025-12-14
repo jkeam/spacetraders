@@ -248,11 +248,11 @@ class Ship:
 
         route:dict = ship_nav["route"]
         departure:ShipPoint = ShipPoint(
-                route["departure"]["symbol"],
-                route["departure"]["type"],
-                route["departure"]["systemSymbol"],
-                route["departure"]["x"],
-                route["departure"]["y"])
+                route["origin"]["symbol"],
+                route["origin"]["type"],
+                route["origin"]["systemSymbol"],
+                route["origin"]["x"],
+                route["origin"]["y"])
         destination:ShipPoint = ShipPoint(
                 route["destination"]["symbol"],
                 route["destination"]["type"],
