@@ -376,9 +376,10 @@ class Hero:
         self.ships_by_symbol:dict[str, Ship]
 
     def __str__(self) -> str:
-        return f"Hero(callsign: {self.callsign}\nfaction: {self.faction}\ntoken: {self.token}\ndebug: {self.debug})"
+        return f"Hero(callsign: {self.callsign}, faction: {self.faction}, token: {self.token}, debug: {self.debug})"
 
     def init_from_file(self, filename:str):
+        """ Read input file and build everything """
         with open(filename, "r") as stream:
             try:
                 obj = yaml.safe_load(stream)

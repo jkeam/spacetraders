@@ -3,7 +3,7 @@ from models import Hero
 
 def main() -> int:
     """ Main function """
-    hero = Hero()
+    hero:Hero = Hero()
     hero.init_from_file("data.yaml")
 
     # prep

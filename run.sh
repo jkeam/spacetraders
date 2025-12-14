@@ -1,3 +1,3 @@
 #!/bin/bash
 
-python ./app.py
+uv run python ./app.py
