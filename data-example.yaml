@@ -1,0 +1,6 @@
+---
+debug: true
+callsign: sparkster
+faction: COSMIC
+agent_token: <agent_token>
+account_token: <account_token>

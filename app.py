@@ -28,9 +28,9 @@ def main() -> int:
     # hero.refuel(ship_name)
 
     # mine and sell goods
-    ship_names:list[str] = ["SPARKSTER-1", "SPARKSTER-3"]
-    hero.send_ships_to_mine(ship_names)
-    hero.sell_all_cargo_for_ships(ship_names, ["ALUMINUM_ORE"])
+    # ship_names:list[str] = ["SPARKSTER-1", "SPARKSTER-3"]
+    # hero.send_ships_to_mine(ship_names)
+    # hero.sell_all_cargo_for_ships(ship_names, ["ALUMINUM_ORE"])
 
     # see things
     # hero.get_cargo(ship_name)

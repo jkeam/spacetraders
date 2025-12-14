@@ -8,6 +8,12 @@ CLI client to play the spacetraders game.
 
 ## Running
 
-1. Update `data.yaml`
+1. Copy config
 
-2. `run.sh`
+    ```shell
+    cp ./data-example.yaml ./data.yaml
+    ```
+
+2. Update values in `data.yaml`
+
+3. `run.sh`
