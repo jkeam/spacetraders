@@ -7,8 +7,9 @@ from dataclasses import dataclass
 
 class Spacetrader:
     """ Represents the spacetracer API """
-    def __init__(self, token:str, debug: bool) -> None:
+    def __init__(self, token:str, account_token: str, debug: bool) -> None:
         self.token = token
+        self.account_token = account_token
         self.debug = debug
 
     def get_auth(self, path:str, data:dict = {}) -> dict:
@@ -21,7 +22,7 @@ class Spacetrader:
         return self._call_endpoint("POST", True, path, data)
 
     def post_noauth(self, path:str, data:dict = {}) -> dict:
-        return self._call_endpoint("POST", False, path, data)
+        return self._call_endpoint("POST", True, path, data)
 
     # Helper Methods
 
@@ -32,7 +33,10 @@ class Spacetrader:
         headers = { "Host": host, "Content-Type": "application/json" }
 
         if authenticated:
-            headers["Authorization"] = f"Bearer {self.token}"
+            if self.token is not None and self.token != "":
+                headers["Authorization"] = f"Bearer {self.token}"
+            else:
+                headers["Authorization"] = f"Bearer {self.account_token}"
 
         if data is not None and len(data) > 0:
             conn.request(method, f"/v2/{path}", json.dumps(data), headers=headers)
@@ -386,8 +390,9 @@ class Hero:
                 self.callsign = obj["callsign"]
                 self.faction = obj["faction"]
                 self.token = obj.get("token", None)
+                self.account_token = obj.get("account_token", None)
                 self.debug = obj.get("debug", False)
-                self.api = Spacetrader(self.token, self.debug)
+                self.api = Spacetrader(self.token, self.account_token, self.debug)
                 if self.debug:
                     print(self)
             except yaml.YAMLError as exc:
@@ -396,6 +401,9 @@ class Hero:
 
         # check for token
         if self.token is None or self.token == "":
+            if self.account_token is None or self.account_token == "":
+                raise Exception("No valid token nor account token found")
+
             resp = self.api.post_noauth("register", {"symbol": self.callsign, "faction": self.faction})
             if self.debug:
                 print(resp)
@@ -410,7 +418,8 @@ class Hero:
                                  "debug": self.debug,
                                  "callsign": self.callsign,
                                  "faction": self.faction,
-                                 "token": self.token
+                                 "token": self.token,
+                                 "account_token": self.account_token
                                }
                         stream.write(yaml.dump(data))
                     except yaml.YAMLError as exc:
