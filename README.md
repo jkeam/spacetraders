@@ -17,3 +17,11 @@ CLI client to play the spacetraders game.
 2. Update values in `data.yaml`
 
 3. `run.sh`
+
+## Links
+
+1. [Yaspin](https://pypi.org/project/yaspin/)
+2. [Inquirer](https://pypi.org/project/inquirer/)
+3. [Tabulate2](https://pypi.org/project/tabulate2/)
+4. [Typer](https://typer.tiangolo.com/tutorial/)
+5. [PyFiglet](https://pypi.org/project/pyfiglet/)
