@@ -372,7 +372,7 @@ class Hero:
         self.debug:bool = False
         self.contracts:list[Contract]
         self.headquarter_waypoints:list[Waypoint]
-        self.headquarter:Location
+        self.headquarter:Location|None
         self.headquarter_shipyard:Waypoint
         self.account_id:str
         self.credits:int
@@ -380,7 +380,7 @@ class Hero:
         self.ships_by_symbol:dict[str, Ship]
 
     def __str__(self) -> str:
-        return f"Hero(callsign: {self.callsign}, faction: {self.faction}, token: {self.token}, debug: {self.debug})"
+        return f"Hero(callsign: {self.callsign}, faction: {self.faction})"
 
     def init_from_file(self, filename:str):
         """ Read input file and build everything """
@@ -393,6 +393,7 @@ class Hero:
                 self.account_token = obj.get("account_token", None)
                 self.debug = obj.get("debug", False)
                 self.api = Spacetrader(self.token, self.account_token, self.debug)
+                self.headquarter = None
                 if self.debug:
                     print(self)
             except yaml.YAMLError as exc:
@@ -484,6 +485,8 @@ class Hero:
 
     def get_headquarter_waypoints(self) -> list[Waypoint]:
         """ Get the HQ Waypoints """
+        if self.headquarter is None:
+            self.get_agent()
         raw_waypoints = self.api.get_auth(f"systems/{self.headquarter.system}/waypoints")["data"]
         self.headquarter_waypoints = list(map(lambda w: Waypoint(w), raw_waypoints))
         if self.debug:
