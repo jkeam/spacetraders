@@ -471,6 +471,14 @@ class Hero:
                 print(c)
         return self.contracts
 
+    def get_contract_by_id(self, id) -> Contract|None:
+        """ Get contract by id """
+        if len(self.contracts) == 0:
+            self.get_contracts()
+        if len(self.contracts) == 0:
+            return None
+        return next((c for c in self.contracts if c.id == id), None)
+
     def accept_all_contracts(self) -> None:
         """ Accept all contracts """
         self.get_contracts()
@@ -760,14 +768,18 @@ class Menu:
                             self.hero.get_my_ships()
                             ship_names: list[str] = list(self.hero.ships_by_symbol.keys())
                             self.print_list({"Ship Names": ship_names})
-                            # todo make this a next node
                             ship_name:str = self.ask_with_choice("Which ship do you want to view?", ship_names)
                             ship:Ship = self.hero.ships_by_symbol[ship_name]
                             print(ship)
                         case "contracts":
                             contracts = self.hero.get_contracts()
+                            contract_ids = list(map(lambda c: c.id, contracts))
                             if len(contracts) == 0:
                                 print("No contracts")
+                            else:
+                                self.print_list({"Contract IDs": contract_ids})
+                                contract_id:str = self.ask_with_choice("Which contract do you want to view?", contract_ids)
+                                print(self.hero.get_contract_by_id(contract_id))
                     self.advance_current_choice()
                     return True
         return False
