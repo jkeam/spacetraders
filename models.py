@@ -1,9 +1,12 @@
 import http.client
 import yaml
 import json
+from tabulate import tabulate
 from datetime import datetime as dt
 from time import sleep
 from dataclasses import dataclass
+from enum import Enum
+from inquirer import prompt, List as IList
 
 class Spacetrader:
     """ Represents the spacetracer API """
@@ -649,3 +652,122 @@ class Hero:
     ## Helpers
     def _find_ship_by_name(self, name:str) -> Ship|None:
         return self.ships_by_symbol.get(name, None)
+
+@dataclass
+class Option:
+  """ Option """
+  text:str
+  next_choice_name:str
+
+class ChoiceType(Enum):
+    ACTION = 1
+    PROMPT = 2
+    GET = 3
+
+@dataclass(init=False)
+class Choice:
+    """ Choice """
+    name:str
+    choice_type:ChoiceType
+    text:str
+    options:list[Option]
+    arg:str
+    next_choice_name:str
+
+    def __init__(self, name, choice_type):
+        self.name = name
+        self.choice_type = choice_type
+        self.text = ""
+        self.arg = ""
+        self.next_choice_name = ""
+        self.options = []
+
+class Menu:
+    """ Menu Handler """
+    def __init__(self, hero:Hero) -> None:
+        self.hero = hero
+        self.choices:list[Choice] = []
+        self.choice_by_name:dict[str,Choice] = {}
+        # default exit choice
+        self.current_choice:Choice = Choice("quit", "action")
+
+    def init_from_file(self, filename:str):
+        with open(filename, "r") as stream:
+            try:
+                top = yaml.safe_load(stream)
+                for obj in top["choices"]:
+                    choice:Choice = Choice(obj["name"], ChoiceType[obj["type"].upper()])
+                    choice.text = obj.get("text", "")
+                    choice.options = list(map(lambda o: Option(o["text"], o["next"]), obj.get("options", [])))
+                    choice.next_choice_name = obj.get("next", "")
+                    choice.arg = obj.get("arg", "")
+                    self.choices.append(choice)
+                    self.choice_by_name[choice.name] = choice
+                # root and quit are a required node
+                # get needs arg
+                self.current_choice = self.choice_by_name["root"]
+                print(self.current_choice)
+            except yaml.YAMLError as exc:
+                print(exc)
+                print(f"Unable to read from file named {filename}")
+
+    def ask_with_choice(self, question:str, choices:list[str], variable_name:str="answer") -> str:
+        """ Ask user for a choice """
+        questions:list[IList] = [
+          IList(variable_name, message=question, choices=choices)
+        ]
+        answers = prompt(questions)
+        if answers is None:
+            return ""
+        return answers[variable_name]
+
+    def print_dict(self, table: dict[str,str]) -> None:
+        """ Print dictionary """
+        new_table:dict[str, list[str]] = {}
+        for key, value in table.items():
+            new_table[key] = [value]
+        print(tabulate(new_table, "keys", tablefmt="simple_grid"))
+
+    def print_list(self, table: dict[str,list[str]]) -> None:
+        """ Print list """
+        print(tabulate(table, "keys", tablefmt="simple_grid"))
+
+    def advance_current_choice(self, the_next_name:str|None=None) -> None:
+        if the_next_name is None:
+            the_next_name = self.current_choice.next_choice_name
+        self.current_choice = self.choice_by_name[the_next_name]
+
+    def query_user(self) -> bool:
+        """ True to keep going, False to quit """
+        if self.current_choice is not None:
+            match self.current_choice.choice_type:
+                case ChoiceType.PROMPT:
+                    choice:str = self.ask_with_choice(
+                            self.current_choice.text,
+                            list(map(lambda x: x.text, self.current_choice.options)))
+                    matching:Option = next(
+                            (n for n in self.current_choice.options if n.text == choice), Option("", "root"))
+                    self.advance_current_choice(matching.next_choice_name)
+                    return choice != "quit"
+                case ChoiceType.GET:
+                    # get the thing with arg
+                    match self.current_choice.arg:
+                        case "agent":
+                            self.print_dict(self.hero.get_agent())
+                        case "hq":
+                            print(self.hero.get_headquarter_waypoints())
+                        case "ships":
+                            self.hero.get_my_ships()
+                            ship_names: list[str] = list(self.hero.ships_by_symbol.keys())
+                            self.print_list({"Ship Names": ship_names})
+                            # todo make this a next node
+                            ship_name:str = self.ask_with_choice("Which ship do you want to view?", ship_names)
+                            ship:Ship = self.hero.ships_by_symbol[ship_name]
+                            print(ship)
+                        case "contracts":
+                            contracts = self.hero.get_contracts()
+                            if len(contracts) == 0:
+                                print("No contracts")
+                    self.advance_current_choice()
+                    return True
+        return False

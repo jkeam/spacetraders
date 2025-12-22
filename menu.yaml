@@ -1,0 +1,40 @@
+---
+choices:
+  - name: root
+    type: prompt
+    text: What do you want to do?
+    options:
+      - text: info
+        next: info
+      - text: quit
+        next: quit
+  - name: info
+    type: prompt
+    text: About what?
+    options:
+      - text: agent
+        next: agent
+      - text: hq
+        next: hq
+      - text: ships
+        next: ships
+      - text: contracts
+        next: contracts
+  - name: agent
+    type: get
+    arg: agent
+    next: info
+  - name: hq
+    type: get
+    arg: hq
+    next: info
+  - name: ships
+    type: get
+    arg: ships
+    next: info
+  - name: contracts
+    type: get
+    arg: contracts
+    next: info
+  - name: quit
+    type: action
