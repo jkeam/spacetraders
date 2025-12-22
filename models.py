@@ -33,7 +33,7 @@ class Spacetrader:
         """ Actually hits the API endpoint """
         host = "api.spacetraders.io"
         conn = http.client.HTTPSConnection(host)
-        headers = { "Host": host, "Content-Type": "application/json" }
+        headers = { "Host": host }
 
         if authenticated:
             if self.token is not None and self.token != "":
@@ -483,12 +483,12 @@ class Hero:
         """ Accept all contracts """
         self.get_contracts()
         for c in self.contracts:
-            self.accept_contract(c)
+            self.accept_contract(c.id)
         self.get_contracts()
 
-    def accept_contract(self, contract:Contract) -> dict:
+    def accept_contract(self, contract_id:str) -> dict:
         """ Accept a particular contract """
-        info = self.api.post_auth(f"my/contracts/{contract.id}/accept")
+        info = self.api.post_auth(f"my/contracts/{contract_id}/accept")
         if self.debug:
             print("Accept Contract")
             print(info)
@@ -779,7 +779,16 @@ class Menu:
                             else:
                                 self.print_list({"Contract IDs": contract_ids})
                                 contract_id:str = self.ask_with_choice("Which contract do you want to view?", contract_ids)
-                                print(self.hero.get_contract_by_id(contract_id))
+                                contract:Contract = self.hero.get_contract_by_id(contract_id)
+                                print(contract)
+                                if contract.accepted:
+                                    print("Contract has already been accepted")
+                                else:
+                                    is_accept:str = self.ask_with_choice("Do you want to accept contract?", ["yes", "no"])
+                                    if is_accept == "yes":
+                                        print(self.hero.accept_contract(contract_id))
+                                        print("Accepted!")
+
                     self.advance_current_choice()
                     return True
         return False
