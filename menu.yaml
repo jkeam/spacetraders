@@ -23,18 +23,18 @@ choices:
   - name: agent
     type: get
     arg: agent
-    next: info
+    next: root
   - name: hq
     type: get
     arg: hq
-    next: info
+    next: root
   - name: ships
     type: get
     arg: ships
-    next: info
+    next: root
   - name: contracts
     type: get
     arg: contracts
-    next: info
+    next: root
   - name: quit
     type: action
