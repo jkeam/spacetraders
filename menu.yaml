@@ -2,7 +2,7 @@
 choices:
   - name: root
     type: prompt
-    text: What do you want to do?
+    text: Menu
     options:
       - text: info
         next: info
@@ -10,7 +10,7 @@ choices:
         next: quit
   - name: info
     type: prompt
-    text: About what?
+    text: Objects
     options:
       - text: agent
         next: agent

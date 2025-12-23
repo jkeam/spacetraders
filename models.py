@@ -535,7 +535,7 @@ class Hero:
         return Waypoint(raw_waypoint)
 
     def get_headquarter_ships(self) -> dict:
-        """ Get all the ships from headquarter """
+        """ Get all the ships available to purchase from headquarter """
         if len(self.headquarter_waypoints) == 0:
             self.get_headquarter_waypoints()
 
@@ -560,7 +560,7 @@ class Hero:
         return {}
 
     def get_headquarter_mining_drones(self) -> list[dict]:
-        """ Get headquarter mining drones """
+        """ Get headquarter mining drones available to purchase """
         ships = list(filter(lambda s: s["type"] == "SHIP_MINING_DRONE", self.get_headquarter_ships()["ships"]))
         if self.debug:
             print("Get Headquarter mining drones")
@@ -851,9 +851,25 @@ class Menu:
                             self.print_list(pretty_waypoints)
                         case "ships":
                             self.hero.get_my_ships()
-                            ship_names: list[str] = list(self.hero.ships_by_symbol.keys())
-                            self.print_list({"Ship Names": ship_names})
-                            ship_name:str = self.ask_with_choice("Which ship do you want to view?", ship_names)
+                            names:list[str] = []
+                            systems:list[str] = []
+                            status:list[str] = []
+                            flight_mode:list[str] = []
+                            fuel:list[str] = []
+                            for name, ship in self.hero.ships_by_symbol.items():
+                                names.append(name)
+                                systems.append(ship.nav.system)
+                                status.append(ship.nav.status)
+                                flight_mode.append(ship.nav.flight_mode)
+                                fuel.append(f"{ship.fuel.current} / {ship.fuel.capacity}"),
+                            self.print_list({
+                                "Names": names,
+                                "Current System": systems,
+                                "Status": status,
+                                "Flight Mode": flight_mode,
+                                "Fuel": fuel,
+                            })
+                            ship_name:str = self.ask_with_choice("Which ship do you want to view?", names)
                             ship:Ship = self.hero.ships_by_symbol[ship_name]
                             self.print_list({
                                 "Field": [
