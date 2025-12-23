@@ -933,10 +933,10 @@ class Menu:
                                         ]
                                     })
                                     if not contract.accepted:
-                                        is_accept:str = self.ask_with_choice("Do you want to accept contract?", ["yes", "no"])
-                                        if is_accept == "yes":
-                                            self.hero.accept_contract(contract_id)
-                                            print("Accepted!")
+                                        match self.ask_with_choice("Do you want to accept contract?", ["yes", "no"]):
+                                            case "yes":
+                                                self.hero.accept_contract(contract_id)
+                                                print("Accepted!")
 
                     self.advance_current_choice()
                     return True
