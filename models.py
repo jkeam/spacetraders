@@ -823,18 +823,36 @@ class Menu:
                                     "Symbol",
                                     "Faction",
                                     "Role",
+                                    "Crew",
+                                    "Cargo",
+                                    "Fuel",
+                                    "Frame",
+                                    "Current System",
+                                    "Current Status",
+                                    "Flight Mode",
+                                    "Departure",
+                                    "Arrival",
+                                    "Modules",
+                                    "Mounts",
                                 ],
                                 "Value": [
                                     ship.name,
                                     ship.symbol,
                                     ship.faction,
                                     ship.role,
+                                    f"{ship.crew.current} / {ship.crew.capacity}, required={ship.crew.required}, rotation={ship.crew.rotation}, morale={ship.crew.morale}, wages={ship.crew.wages}",
+                                    f"{ship.cargo.units} / {ship.cargo.capacity}, inventory=[{', '.join(list(map(lambda i: str(i), ship.cargo.inventory)))}]",
+                                    f"{ship.fuel.current} / {ship.fuel.capacity}",
+                                    f"{ship.frame.name} ({ship.frame.symbol}): condition={ship.frame.condition}, power_req={ship.frame.power_requirement}, crew_req={ship.frame.crew_requirement}, module_slots={ship.frame.module_slots}, mounting_points={ship.frame.mounting_points}",
+                                    ship.nav.system,
+                                    ship.nav.status,
+                                    ship.nav.flight_mode,
+                                    f"{ship.nav.route.departure.type} in {ship.nav.route.departure.symbol} ({ship.nav.route.departure.x}, {ship.nav.route.departure.y}) at {ship.nav.route.departure_at}",
+                                    f"{ship.nav.route.destination.type} in {ship.nav.route.destination.symbol} ({ship.nav.route.destination.x}, {ship.nav.route.destination.y}) at {ship.nav.route.arrival_at}",
+                                    "\n\n".join(list(map(lambda m: f"{m.name} ({m.symbol}): capacity={m.capacity}, power_req={m.power_requirement}, crew_req={m.crew_requirement}, slot_req={m.slot_requirement},\n{m.description}", ship.modules))),
+                                    "\n\n".join(list(map(lambda m: f"{m.name} ({m.symbol}): power_req={m.power_requirement}, crew_req={m.crew_requirement}, strength={m.strength},\n{m.description}", ship.mounts))),
                                 ],
                             })
-                            # TODO: Fix this temporary hack
-                            match self.ask_with_choice("See detail?", ["yes", "no"]):
-                                case "yes":
-                                    print(ship)
                         case "contracts":
                             contracts = self.hero.get_contracts()
                             contract_ids = list(map(lambda c: c.id, contracts))
