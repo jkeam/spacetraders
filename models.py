@@ -832,7 +832,6 @@ class Menu:
                                     str(agent.ship_count),
                                 ]
                             })
-                            self.print_dict(self.hero.get_agent())
                         case "systems":
                             systems = self.hero.get_systems()
                             names:list[str] = []
