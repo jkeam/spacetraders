@@ -495,7 +495,7 @@ class Hero:
         return info
 
     def get_headquarter_waypoints(self) -> list[Waypoint]:
-        """ Get the HQ Waypoints """
+        """ Get all the waypoints in the same system as the headquarter """
         if self.headquarter is None:
             self.get_agent()
         raw_waypoints = self.api.get_auth(f"systems/{self.headquarter.system}/waypoints")["data"]
@@ -505,6 +505,20 @@ class Hero:
             for w in self.headquarter_waypoints:
                 print(w)
         return self.headquarter_waypoints
+
+    def get_headquarter(self) -> Waypoint:
+        """ Get the waypoint that represents the headquarter """
+        if self.headquarter is None:
+            self.get_agent()
+        return self.get_waypoint(self.headquarter)
+
+    def get_waypoint(self, location) -> Waypoint:
+        """ Get waypoint given a location """
+        raw_waypoint = self.api.get_auth(f"systems/{location.system}/waypoints/{location.waypoint}")["data"]
+        if self.debug:
+            print("Get Waypoint")
+            print(raw_waypoint)
+        return Waypoint(raw_waypoint)
 
     def get_headquarter_ships(self) -> dict:
         """ Get all the ships from headquarter """
@@ -523,6 +537,7 @@ class Hero:
             if self.debug:
                 print("Found Shipyard")
                 print(shipyard)
+
             raw_ships = self.api.get_auth(f"systems/{self.headquarter.system}/waypoints/{shipyard.waypoint}/shipyard")["data"]
             if self.debug:
                 print("Get Headquarter Ships")
@@ -762,15 +777,64 @@ class Menu:
                     match self.current_choice.arg:
                         case "agent":
                             self.print_dict(self.hero.get_agent())
-                        case "hq":
-                            print(self.hero.get_headquarter_waypoints())
+                        case "headquarter":
+                            hq:Waypoint = self.hero.get_headquarter()
+                            self.print_dict({
+                                "Waypoint": str(hq.waypoint),
+                                "Type": hq.type,
+                                "X": str(hq.x),
+                                "Y": str(hq.y),
+                                "Orbital": ", ".join(list(map(lambda w: w.waypoint, hq.orbitals))),
+                                "Traits": ", ".join(list(map(lambda w: w.symbol, hq.traits))),
+                            })
+                        case "headquarter_waypoints":
+                            waypoints:list[Waypoint] = self.hero.get_headquarter_waypoints()
+                            ways:list[str] = []
+                            types:list[str] = []
+                            xs:list[str] = []
+                            ys:list[str] = []
+                            orbitals:list[str] = []
+                            traits:list[str] = []
+                            for waypoint in waypoints:
+                                ways.append(str(waypoint.waypoint))
+                                types.append(waypoint.type)
+                                xs.append(str(waypoint.x))
+                                ys.append(str(waypoint.y))
+                                orbitals.append(", ".join(list(map(lambda w: w.waypoint, waypoint.orbitals))))
+                                traits.append(", ".join(list(map(lambda w: w.symbol, waypoint.traits))))
+                            pretty_waypoints:dict[str,list[str]] = {
+                                "Waypoint": ways,
+                                "Type": types,
+                                "X": xs,
+                                "Y": ys,
+                                "Orbital": orbitals,
+                                "Traits": traits
+                            }
+                            self.print_list(pretty_waypoints)
                         case "ships":
                             self.hero.get_my_ships()
                             ship_names: list[str] = list(self.hero.ships_by_symbol.keys())
                             self.print_list({"Ship Names": ship_names})
                             ship_name:str = self.ask_with_choice("Which ship do you want to view?", ship_names)
                             ship:Ship = self.hero.ships_by_symbol[ship_name]
-                            print(ship)
+                            self.print_list({
+                                "Field": [
+                                    "Name",
+                                    "Symbol",
+                                    "Faction",
+                                    "Role",
+                                ],
+                                "Value": [
+                                    ship.name,
+                                    ship.symbol,
+                                    ship.faction,
+                                    ship.role,
+                                ],
+                            })
+                            # TODO: Fix this temporary hack
+                            match self.ask_with_choice("See detail?", ["yes", "no"]):
+                                case "yes":
+                                    print(ship)
                         case "contracts":
                             contracts = self.hero.get_contracts()
                             contract_ids = list(map(lambda c: c.id, contracts))
@@ -779,15 +843,44 @@ class Menu:
                             else:
                                 self.print_list({"Contract IDs": contract_ids})
                                 contract_id:str = self.ask_with_choice("Which contract do you want to view?", contract_ids)
-                                contract:Contract = self.hero.get_contract_by_id(contract_id)
-                                print(contract)
-                                if contract.accepted:
-                                    print("Contract has already been accepted")
+                                contract:Contract|None = self.hero.get_contract_by_id(contract_id)
+                                if contract is None:
+                                    print("Contract not found")
                                 else:
-                                    is_accept:str = self.ask_with_choice("Do you want to accept contract?", ["yes", "no"])
-                                    if is_accept == "yes":
-                                        print(self.hero.accept_contract(contract_id))
-                                        print("Accepted!")
+                                    print(contract)
+                                    self.print_list({
+                                        "Field": [
+                                            "ID",
+                                            "Faction",
+                                            "Type",
+                                            "Accepted",
+                                            "Fulfilled",
+                                            "Expiration",
+                                            "Deadline",
+                                            "Term Deadline",
+                                            "Payment on Accepted",
+                                            "Payment on Fulfilled",
+                                            "Deliveries",
+                                        ],
+                                        "Value": [
+                                            contract.id,
+                                            contract.faction,
+                                            contract.type,
+                                            str(contract.accepted),
+                                            str(contract.fulfilled),
+                                            str(contract.expiration),
+                                            str(contract.deadline),
+                                            str(contract.terms.deadline),
+                                            str(contract.terms.payment_on_accepted),
+                                            str(contract.terms.payment_on_fulfilled),
+                                            ", ".join(list(map(lambda d: str(d), contract.terms.deliveries))),
+                                        ]
+                                    })
+                                    if not contract.accepted:
+                                        is_accept:str = self.ask_with_choice("Do you want to accept contract?", ["yes", "no"])
+                                        if is_accept == "yes":
+                                            print(self.hero.accept_contract(contract_id))
+                                            print("Accepted!")
 
                     self.advance_current_choice()
                     return True
