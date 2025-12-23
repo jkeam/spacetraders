@@ -366,6 +366,16 @@ class Waypoint(Location):
     def __str__(self) -> str:
         return f"Waypoint(location: {super().__str__()}, type: {self.type}, x: {self.x}, y: {self.y}, orbitals: {list(map(lambda o: o.__str__(), self.orbitals))})"
 
+@dataclass
+class Agent:
+    """ Agent """
+    account_id:str
+    symbol:str
+    headquarter:Location
+    credits:int
+    starting_faction:str
+    ship_count:int
+
 class Hero:
     """ Class representing the player """
     def __init__(self):
@@ -432,19 +442,24 @@ class Hero:
             else:
                 print("Unable to get token")
 
-    def get_agent(self) -> dict:
+    def get_agent(self) -> Agent:
         """ Get agent info """
         info = self.api.get_auth("my/agent")["data"]
+        agent:Agent = Agent(
+                info["accountId"],
+                info["symbol"],
+                Location(info["headquarters"]),
+                info["credits"],
+                info["startingFaction"],
+                info["shipCount"],
+        )
         if self.debug:
-            print(info)
+            print(agent)
 
-        self.headquarter = Location(info["headquarters"])
-        self.account_id = info["accountId"]
-        self.credits = info["credits"]
-        if self.debug:
-            print("Get Agent")
-            print(self.headquarter)
-        return info
+        self.headquarter = agent.headquarter
+        self.account_id = agent.account_id
+        self.credits = agent.credits
+        return agent
 
     def get_my_ships(self) -> dict:
         """ Get my ships """
@@ -776,16 +791,42 @@ class Menu:
                     # get the thing with arg
                     match self.current_choice.arg:
                         case "agent":
-                            self.print_dict(self.hero.get_agent())
+                            agent:Agent = self.hero.get_agent()
+                            self.print_list({
+                                "Field": [
+                                    "Account ID",
+                                    "Symbol",
+                                    "Headquarter",
+                                    "Credits",
+                                    "Starting Faction",
+                                    "Ship Count",
+                                ],
+                                "Value": [
+                                    agent.account_id,
+                                    agent.symbol,
+                                    agent.headquarter.waypoint,
+                                    str(agent.credits),
+                                    agent.starting_faction,
+                                    str(agent.ship_count),
+                                ]
+                            })
                         case "headquarter":
                             hq:Waypoint = self.hero.get_headquarter()
-                            self.print_dict({
-                                "Waypoint": str(hq.waypoint),
-                                "Type": hq.type,
-                                "X": str(hq.x),
-                                "Y": str(hq.y),
-                                "Orbital": ", ".join(list(map(lambda w: w.waypoint, hq.orbitals))),
-                                "Traits": ", ".join(list(map(lambda w: w.symbol, hq.traits))),
+                            self.print_list({
+                                "Fields": [
+                                    "Waypoint",
+                                    "Type",
+                                    "(X, Y)",
+                                    "Orbital",
+                                    "Traits",
+                                ],
+                                "Value": [
+                                    str(hq.waypoint),
+                                    hq.type,
+                                    f"({hq.x}, {hq.y})",
+                                    ", ".join(list(map(lambda w: w.waypoint, hq.orbitals))),
+                                    ", ".join(list(map(lambda w: w.symbol, hq.traits))),
+                                ]
                             })
                         case "headquarter_waypoints":
                             waypoints:list[Waypoint] = self.hero.get_headquarter_waypoints()
@@ -847,8 +888,8 @@ class Menu:
                                     ship.nav.system,
                                     ship.nav.status,
                                     ship.nav.flight_mode,
-                                    f"{ship.nav.route.departure.type} in {ship.nav.route.departure.symbol} ({ship.nav.route.departure.x}, {ship.nav.route.departure.y}) at {ship.nav.route.departure_at}",
-                                    f"{ship.nav.route.destination.type} in {ship.nav.route.destination.symbol} ({ship.nav.route.destination.x}, {ship.nav.route.destination.y}) at {ship.nav.route.arrival_at}",
+                                    f"{ship.nav.route.departure.type} at {ship.nav.route.departure.symbol} ({ship.nav.route.departure.x}, {ship.nav.route.departure.y}) at {ship.nav.route.departure_at}",
+                                    f"{ship.nav.route.destination.type} at {ship.nav.route.destination.symbol} ({ship.nav.route.destination.x}, {ship.nav.route.destination.y}) at {ship.nav.route.arrival_at}",
                                     "\n\n".join(list(map(lambda m: f"{m.name} ({m.symbol}): capacity={m.capacity}, power_req={m.power_requirement}, crew_req={m.crew_requirement}, slot_req={m.slot_requirement},\n{m.description}", ship.modules))),
                                     "\n\n".join(list(map(lambda m: f"{m.name} ({m.symbol}): power_req={m.power_requirement}, crew_req={m.crew_requirement}, strength={m.strength},\n{m.description}", ship.mounts))),
                                 ],
@@ -891,7 +932,7 @@ class Menu:
                                             str(contract.terms.deadline),
                                             str(contract.terms.payment_on_accepted),
                                             str(contract.terms.payment_on_fulfilled),
-                                            ", ".join(list(map(lambda d: str(d), contract.terms.deliveries))),
+                                            ", ".join(list(map(lambda d: f"{d.units_fulfilled} / {d.units_required} of {d.trade} to {d.destination}", contract.terms.deliveries))),
                                         ]
                                     })
                                     if not contract.accepted:
