@@ -461,7 +461,7 @@ class Hero:
         self.credits = agent.credits
         return agent
 
-    def get_my_ships(self) -> dict:
+    def get_my_ships(self) -> list[Ship]:
         """ Get my ships """
         info = self.api.get_auth("my/ships")["data"]
 
@@ -474,7 +474,7 @@ class Hero:
             print(info)
             for s in self.ships_by_symbol:
                 print(s)
-        return info
+        return ships
 
     def get_contracts(self) -> list[Contract]:
         """ Get contracts """
@@ -501,13 +501,12 @@ class Hero:
             self.accept_contract(c.id)
         self.get_contracts()
 
-    def accept_contract(self, contract_id:str) -> dict:
+    def accept_contract(self, contract_id:str) -> None:
         """ Accept a particular contract """
         info = self.api.post_auth(f"my/contracts/{contract_id}/accept")
         if self.debug:
             print("Accept Contract")
             print(info)
-        return info
 
     def get_headquarter_waypoints(self) -> list[Waypoint]:
         """ Get all the waypoints in the same system as the headquarter """
@@ -724,7 +723,6 @@ class Menu:
     """ Menu Handler """
     def __init__(self, hero:Hero) -> None:
         self.hero = hero
-        self.choices:list[Choice] = []
         self.choice_by_name:dict[str,Choice] = {}
         # default exit choice
         self.current_choice:Choice = Choice("quit", "action")
@@ -739,7 +737,6 @@ class Menu:
                     choice.options = list(map(lambda o: Option(o["text"], o["next"]), obj.get("options", [])))
                     choice.next_choice_name = obj.get("next", "")
                     choice.arg = obj.get("arg", "")
-                    self.choices.append(choice)
                     self.choice_by_name[choice.name] = choice
                 # root and quit are a required node
                 # get needs arg
@@ -938,7 +935,7 @@ class Menu:
                                     if not contract.accepted:
                                         is_accept:str = self.ask_with_choice("Do you want to accept contract?", ["yes", "no"])
                                         if is_accept == "yes":
-                                            print(self.hero.accept_contract(contract_id))
+                                            self.hero.accept_contract(contract_id)
                                             print("Accepted!")
 
                     self.advance_current_choice()
