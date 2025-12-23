@@ -14,6 +14,8 @@ choices:
     options:
       - text: agent
         next: agent
+      - text: systems
+        next: systems
       - text: headquarter
         next: headquarter
       - text: headquarter waypoints
@@ -22,6 +24,10 @@ choices:
         next: ships
       - text: contracts
         next: contracts
+  - name: systems
+    type: get
+    arg: systems
+    next: root
   - name: agent
     type: get
     arg: agent

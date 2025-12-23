@@ -353,6 +353,22 @@ class WaypointTrait():
     name:str
     description:str
 
+class System():
+    """ The system """
+    def __init__(self, system:dict) -> None:
+        self.name:str = system["name"]
+        self.constellation:str = system["constellation"]
+        self.symbol:str = system["symbol"]
+        self.sector:str = system["sectorSymbol"]
+        self.system_type:str = system["type"]
+        self.x:int = system["x"]
+        self.y:int = system["y"]
+        self.waypoints:list[Waypoint] = list(map(lambda w: Waypoint(w), system["waypoints"]))
+        self.factions:list[str] = list(map(lambda f: f["symbol"], system["factions"]))
+
+    def __str__(self) -> str:
+        return f"System(name: {self.name}, constellation: {self.constellation}, x: {self.x}, y: {self.y}, symbol: {self.symbol}, sector: {self.sector}, type: {self.system_type}, factions: {self.factions}, waypoints: {list(map(lambda w: str(w), self.waypoints))})"
+
 class Waypoint(Location):
     """ Waypoint, like a location but with way more data """
     def __init__(self, loc:dict) -> None:
@@ -361,7 +377,8 @@ class Waypoint(Location):
         self.x:int = loc["x"]
         self.y:int = loc["y"]
         self.orbitals:list[Location] = list(map(lambda o: Location(o["symbol"]), loc["orbitals"]))
-        self.traits:list[WaypointTrait] = list(map(lambda t: WaypointTrait(t["symbol"], t["name"], t["description"]), loc["traits"]))
+        self.orbits:str = loc.get("orbits", "")
+        self.traits:list[WaypointTrait] = list(map(lambda t: WaypointTrait(t["symbol"], t["name"], t["description"]), loc.get("traits", [])))
 
     def __str__(self) -> str:
         return f"Waypoint(location: {super().__str__()}, type: {self.type}, x: {self.x}, y: {self.y}, orbitals: {list(map(lambda o: o.__str__(), self.orbitals))})"
@@ -525,6 +542,14 @@ class Hero:
         if self.headquarter is None:
             self.get_agent()
         return self.get_waypoint(self.headquarter)
+
+    def get_systems(self) -> list[System]:
+        """ Get all systems """
+        raw = self.api.get_auth(f"systems")["data"]
+        if self.debug:
+            print("Get Systems")
+            print(raw)
+        return list(map(lambda s: System(s), raw))
 
     def get_waypoint(self, location) -> Waypoint:
         """ Get waypoint given a location """
@@ -807,6 +832,37 @@ class Menu:
                                     str(agent.ship_count),
                                 ]
                             })
+                            self.print_dict(self.hero.get_agent())
+                        case "systems":
+                            systems = self.hero.get_systems()
+                            names:list[str] = []
+                            constellations:list[str] = []
+                            xs:list[str] = []
+                            ys:list[str] = []
+                            symbols:list[str] = []
+                            sectors:list[str] = []
+                            types:list[str] = []
+                            factions:list[str] = []
+                            for system in systems:
+                                names.append(system.name)
+                                constellations.append(system.constellation)
+                                xs.append(str(system.x))
+                                ys.append(str(system.y))
+                                symbols.append(system.symbol)
+                                types.append(system.system_type)
+                                sectors.append(system.sector)
+                                factions.append(", ".join(system.factions))
+                            pretty_systems:dict[str,list[str]] = {
+                                "Names": names,
+                                "Constellations": constellations,
+                                "X": xs,
+                                "Y": ys,
+                                "Symbols": symbols,
+                                "Sectors": sectors,
+                                "Types": types,
+                                "Factions": factions,
+                            }
+                            self.print_list(pretty_systems)
                         case "headquarter":
                             hq:Waypoint = self.hero.get_headquarter()
                             self.print_list({
