@@ -172,8 +172,7 @@ class Printer():
         pretty_systems:dict[str,list[str]] = {
             "Names": names,
             "Constellations": constellations,
-            "X": xs,
-            "Y": ys,
+            "(X, Y)": xy,
             "Symbols": symbols,
             "Sectors": sectors,
             "Types": types,
