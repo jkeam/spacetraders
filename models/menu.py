@@ -9,6 +9,7 @@ from models.agent import Agent
 from models.system import System
 from models.waypoint import Waypoint
 from models.ship import Ship
+from model.contract import Contract
 
 @dataclass
 class Option:
@@ -64,7 +65,6 @@ class Menu:
                 # root and quit are a required node
                 # action needs route
                 self.current_choice = self.choice_by_name["root"]
-                print(self.current_choice)
             except yaml.YAMLError as exc:
                 print(exc)
                 print(f"Unable to read from file named {filename}")
@@ -288,7 +288,8 @@ class Menu:
                                 if contract is None:
                                     print("Contract not found")
                                 else:
-                                    print(contract)
+                                    if self.hero.debug:
+                                        print(contract)
                                     self.print_list({
                                         "Field": [
                                             "ID",
