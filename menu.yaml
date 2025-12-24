@@ -43,7 +43,11 @@ choices:
   - name: get_ships
     type: action
     route: get_ships
-    next: root
+    next: get_ship
+  - name: get_ship
+    type: action
+    route: get_ship
+    next: get_ships
   - name: get_contracts
     type: action
     route: get_contracts

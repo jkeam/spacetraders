@@ -137,6 +137,9 @@ class Menu:
                             ships:list[Ship] = self.hero.ships_by_symbol.values()
                             self.printer.print_ships(ships)
                             names:list[str] = [ship.name for ship in ships]
+                        case "get_ship":
+                            ships:list[Ship] = self.hero.ships_by_symbol.values()
+                            names:list[str] = [ship.name for ship in ships]
                             cancel_text:str = self.add_back(names)
                             ship_name:str = self.ask_with_choice("Which ship do you want to view?", names)
                             if ship_name == cancel_text:
