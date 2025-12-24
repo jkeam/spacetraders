@@ -25,28 +25,28 @@ choices:
       - text: contracts
         next: contracts
   - name: systems
-    type: get
-    arg: systems
+    type: action
+    route: get_systems
     next: root
   - name: agent
-    type: get
-    arg: agent
+    type: action
+    route: get_agent
     next: root
   - name: headquarter
-    type: get
-    arg: headquarter
+    type: action
+    route: get_headquarter
     next: root
   - name: headquarter_waypoints
-    type: get
-    arg: headquarter_waypoints
+    type: action
+    route: get_headquarter_waypoints
     next: root
   - name: ships
-    type: get
-    arg: ships
+    type: action
+    route: get_ships
     next: root
   - name: contracts
-    type: get
-    arg: contracts
+    type: action
+    route: get_contracts
     next: root
   - name: quit
     type: action

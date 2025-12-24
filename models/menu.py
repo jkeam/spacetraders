@@ -16,9 +16,8 @@ class Option:
   next_choice_name:str
 
 class ChoiceType(Enum):
-    ACTION = 1
-    PROMPT = 2
-    GET = 3
+    PROMPT = 1
+    ACTION = 2
 
 @dataclass(init=False)
 class Choice:
@@ -27,14 +26,14 @@ class Choice:
     choice_type:ChoiceType
     text:str
     options:list[Option]
-    arg:str
+    route:str
     next_choice_name:str
 
-    def __init__(self, name, choice_type):
+    def __init__(self, name:str, choice_type:ChoiceType):
         self.name = name
         self.choice_type = choice_type
         self.text = ""
-        self.arg = ""
+        self.route = ""
         self.next_choice_name = ""
         self.options = []
 
@@ -44,7 +43,7 @@ class Menu:
         self.hero = hero
         self.choice_by_name:dict[str,Choice] = {}
         # default exit choice
-        self.current_choice:Choice = Choice("quit", "action")
+        self.current_choice:Choice = Choice("quit", ChoiceType.ACTION)
 
     def init_from_file(self, filename:str):
         with open(filename, "r") as stream:
@@ -55,10 +54,10 @@ class Menu:
                     choice.text = obj.get("text", "")
                     choice.options = list(map(lambda o: Option(o["text"], o["next"]), obj.get("options", [])))
                     choice.next_choice_name = obj.get("next", "")
-                    choice.arg = obj.get("arg", "")
+                    choice.route = obj.get("route", "")
                     self.choice_by_name[choice.name] = choice
                 # root and quit are a required node
-                # get needs arg
+                # action needs route
                 self.current_choice = self.choice_by_name["root"]
                 print(self.current_choice)
             except yaml.YAMLError as exc:
@@ -103,10 +102,9 @@ class Menu:
                             (n for n in self.current_choice.options if n.text == choice), Option("", "root"))
                     self.advance_current_choice(matching.next_choice_name)
                     return choice != "quit"
-                case ChoiceType.GET:
-                    # get the thing with arg
-                    match self.current_choice.arg:
-                        case "agent":
+                case ChoiceType.ACTION:
+                    match self.current_choice.route:
+                        case "get_agent":
                             agent:Agent = self.hero.get_agent()
                             self.print_list({
                                 "Field": [
@@ -126,7 +124,7 @@ class Menu:
                                     str(agent.ship_count),
                                 ]
                             })
-                        case "systems":
+                        case "get_systems":
                             systems:list[System] = self.hero.get_systems()
                             names:list[str] = []
                             constellations:list[str] = []
@@ -156,7 +154,7 @@ class Menu:
                                 "Factions": factions,
                             }
                             self.print_list(pretty_systems)
-                        case "headquarter":
+                        case "get_headquarter":
                             hq:Waypoint = self.hero.get_headquarter()
                             self.print_list({
                                 "Fields": [
@@ -174,7 +172,7 @@ class Menu:
                                     ", ".join(list(map(lambda w: w.symbol, hq.traits))),
                                 ]
                             })
-                        case "headquarter_waypoints":
+                        case "get_headquarter_waypoints":
                             waypoints:list[Waypoint] = self.hero.get_headquarter_waypoints()
                             ways:list[str] = []
                             types:list[str] = []
@@ -198,7 +196,7 @@ class Menu:
                                 "Traits": traits
                             }
                             self.print_list(pretty_waypoints)
-                        case "ships":
+                        case "get_ships":
                             self.hero.get_my_ships()
                             names:list[str] = []
                             systems:list[str] = []
@@ -256,7 +254,7 @@ class Menu:
                                     "\n\n".join(list(map(lambda m: f"{m.name} ({m.symbol}): power_req={m.power_requirement}, crew_req={m.crew_requirement}, strength={m.strength},\n{m.description}", ship.mounts))),
                                 ],
                             })
-                        case "contracts":
+                        case "get_contracts":
                             contracts = self.hero.get_contracts()
                             contract_ids = list(map(lambda c: c.id, contracts))
                             if len(contracts) == 0:
