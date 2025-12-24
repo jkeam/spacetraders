@@ -6,6 +6,9 @@ from models.agent import Agent
 from models.system import System
 
 class Printer():
+    def __init__(self, debug:bool) -> None:
+        self.debug = debug
+
     def print_dict(self, table: dict[str,str]) -> None:
         """ Print dictionary """
         new_table:dict[str, list[str]] = {}
@@ -102,7 +105,7 @@ class Printer():
         })
 
     def print_contract(self, contract:Contract) -> None:
-        if self.hero.debug:
+        if self.debug:
             print(contract)
         self.print_list({
             "Field": [

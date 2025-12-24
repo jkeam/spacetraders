@@ -4,9 +4,9 @@ choices:
     type: prompt
     text: Menu
     options:
-      - text: info
+      - text: Info
         next: info
-      - text: quit
+      - text: Quit
         next: quit
   - name: info
     type: prompt
@@ -14,22 +14,22 @@ choices:
     options:
       - text: back
         next: root
-      - text: agent
+      - text: Agent
         next: agent
-      - text: systems
+      - text: Systems
         next: systems
-      - text: headquarter
-        next: headquarter
-      - text: ships
-        next: ships
-      - text: contracts
-        next: contracts
-  - name: headquarter
+  - name: agent
     type: prompt
     text: Pick one
     options:
       - text: back
         next: info
+      - text: Basic Info
+        next: get_agent
+      - text: Ships
+        next: get_ships
+      - text: Contracts
+        next: get_contracts
       - text: Headquarter Info
         next: get_headquarter
       - text: Headquarter Waypoints
@@ -38,26 +38,26 @@ choices:
     type: action
     route: get_systems
     next: get_waypoints
-  - name: agent
+  - name: get_agent
     type: action
     route: get_agent
-    next: info
+    next: agent
   - name: get_headquarter
     type: action
     route: get_headquarter
-    next: headquarter
+    next: agent
   - name: get_headquarter_waypoints
     type: action
     route: get_headquarter_waypoints
-    next: headquarter
-  - name: ships
+    next: agent
+  - name: get_ships
     type: action
     route: get_ships
-    next: info
-  - name: contracts
+    next: agent
+  - name: get_contracts
     type: action
     route: get_contracts
-    next: contracts
+    next: agent
   - name: get_waypoints
     type: action
     route: get_waypoints

@@ -50,7 +50,7 @@ class Menu:
         # default exit choice
         self.current_choice:Choice = Choice("quit", ChoiceType.ACTION)
         self.choices:deque[Choice] = deque()
-        self.printer:Printer = Printer()
+        self.printer:Printer = Printer(self.hero.debug)
 
     def init_from_file(self, filename:str):
         with open(filename, "r") as stream:
@@ -80,10 +80,14 @@ class Menu:
             return ""
         return answers[variable_name]
 
-    def advance_current_choice(self, the_next_name:str|None=None) -> None:
+    def advance_current_choice(self, the_next_name:str|None=None) -> bool:
+        """ True: keep going, False: stop """
         if the_next_name is None:
             the_next_name = self.current_choice.next_choice_name
-        self.current_choice = self.choice_by_name[the_next_name]
+        if the_next_name == "quit":
+            return False
+        self.current_choice = self.choice_by_name.get(the_next_name, "quit")
+        return self.current_choice != "quit"
 
     def back_current_choice(self) -> None:
         if self.current_choice is None:
@@ -114,10 +118,11 @@ class Menu:
                             list(map(lambda x: x.text, self.current_choice.options)))
                     matching:Option = next(
                             (n for n in self.current_choice.options if n.text == choice), Option("", "root"))
-                    self.advance_current_choice(matching.next_choice_name)
-                    return choice != "quit"
+                    return self.advance_current_choice(matching.next_choice_name)
                 case ChoiceType.ACTION:
                     match self.current_choice.route:
+                        case "quit":
+                            return False
                         case "get_agent":
                             self.printer.print_agent(self.hero.get_agent())
                         case "get_systems":
@@ -178,7 +183,6 @@ class Menu:
                             else:
                                 self.printer.print_waypoints(self.hero.get_waypoints(matching.symbol))
 
-                    self.advance_current_choice()
-                    return True
+                    return self.advance_current_choice()
         return False
 
