@@ -23,6 +23,7 @@ class Hero:
         self.credits:int
         self.api:Spacetrader
         self.ships_by_symbol:dict[str, Ship]
+        self.systems:list[System]
 
     def __str__(self) -> str:
         return f"Hero(callsign: {self.callsign}, faction: {self.faction})"
@@ -164,7 +165,8 @@ class Hero:
         if self.debug:
             print("Get Systems")
             print(raw)
-        return list(map(lambda s: System(s), raw))
+        self.systems = list(map(lambda s: System(s), raw))
+        return self.systems
 
     def get_waypoint(self, location) -> Waypoint:
         """ Get waypoint given a location """

@@ -90,6 +90,32 @@ class Menu:
             the_next_name = self.current_choice.next_choice_name
         self.current_choice = self.choice_by_name[the_next_name]
 
+    def print_waypoints():
+        # FIXME
+        waypoints:list[Waypoint] = self.hero.get_headquarter_waypoints()
+        ways:list[str] = []
+        types:list[str] = []
+        xs:list[str] = []
+        ys:list[str] = []
+        orbitals:list[str] = []
+        traits:list[str] = []
+        for waypoint in waypoints:
+            ways.append(str(waypoint.waypoint))
+            types.append(waypoint.type)
+            xs.append(str(waypoint.x))
+            ys.append(str(waypoint.y))
+            orbitals.append(", ".join(list(map(lambda w: w.waypoint, waypoint.orbitals))))
+            traits.append(", ".join(list(map(lambda w: w.symbol, waypoint.traits))))
+        pretty_waypoints:dict[str,list[str]] = {
+            "Waypoint": ways,
+            "Type": types,
+            "X": xs,
+            "Y": ys,
+            "Orbital": orbitals,
+            "Traits": traits
+        }
+        self.print_list(pretty_waypoints)
+
     def query_user(self) -> bool:
         """ True to keep going, False to quit """
         if self.current_choice is not None:
@@ -300,6 +326,10 @@ class Menu:
                                             case "yes":
                                                 self.hero.accept_contract(contract_id)
                                                 print("Accepted!")
+                        case "get_waypoints":
+                            system_names:list[str] = list(map(lambda s: s.name, self.hero.systems))
+                            system:str = self.ask_with_choice("Which system", system_names)
+                            print(system.waypoints)
 
                     self.advance_current_choice()
                     return True

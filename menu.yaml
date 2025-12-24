@@ -27,7 +27,7 @@ choices:
   - name: systems
     type: action
     route: get_systems
-    next: root
+    next: get_waypoints
   - name: agent
     type: action
     route: get_agent
@@ -47,6 +47,10 @@ choices:
   - name: contracts
     type: action
     route: get_contracts
+    next: root
+  - name: get_waypoints
+    type: action
+    route: get_waypoints
     next: root
   - name: quit
     type: action
