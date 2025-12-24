@@ -5,31 +5,21 @@ choices:
     text: Menu
     options:
       - text: Info
-        next: info
-      - text: Quit
-        next: quit
-  - name: info
-    type: prompt
-    text: Info
-    options:
-      - text: back
-        next: root
-      - text: Agent
-        next: agent
-      - text: Systems
-        next: systems
-  - name: agent
-    type: prompt
-    text: Pick one
-    options:
-      - text: back
-        next: info
-      - text: Basic Info
         next: get_agent
+      - text: Headquarter
+        next: headquarter
       - text: Ships
         next: get_ships
       - text: Contracts
         next: get_contracts
+      - text: Quit
+        next: quit
+  - name: headquarter
+    type: prompt
+    text: Headquarter
+    options:
+      - text: back
+        next: root
       - text: Headquarter Info
         next: get_headquarter
       - text: Headquarter Waypoints
@@ -41,23 +31,23 @@ choices:
   - name: get_agent
     type: action
     route: get_agent
-    next: agent
+    next: root
   - name: get_headquarter
     type: action
     route: get_headquarter
-    next: agent
+    next: headquarter
   - name: get_headquarter_waypoints
     type: action
     route: get_headquarter_waypoints
-    next: agent
+    next: headquarter
   - name: get_ships
     type: action
     route: get_ships
-    next: agent
+    next: root
   - name: get_contracts
     type: action
     route: get_contracts
-    next: agent
+    next: root
   - name: get_waypoints
     type: action
     route: get_waypoints
