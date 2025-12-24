@@ -1,6 +1,5 @@
 import yaml
 from collections import deque
-from tabulate import tabulate
 from dataclasses import dataclass
 from enum import Enum
 from inquirer import prompt, List as IList
@@ -10,6 +9,7 @@ from models.system import System
 from models.waypoint import Waypoint
 from models.ship import Ship
 from models.contract import Contract
+from models.printer import Printer
 
 @dataclass
 class Option:
@@ -50,6 +50,7 @@ class Menu:
         # default exit choice
         self.current_choice:Choice = Choice("quit", ChoiceType.ACTION)
         self.choices:deque[Choice] = deque()
+        self.printer:Printer = Printer()
 
     def init_from_file(self, filename:str):
         with open(filename, "r") as stream:
@@ -79,17 +80,6 @@ class Menu:
             return ""
         return answers[variable_name]
 
-    def print_dict(self, table: dict[str,str]) -> None:
-        """ Print dictionary """
-        new_table:dict[str, list[str]] = {}
-        for key, value in table.items():
-            new_table[key] = [value]
-        print(tabulate(new_table, "keys", tablefmt="simple_grid"))
-
-    def print_list(self, table: dict[str,list[str]]) -> None:
-        """ Print list """
-        print(tabulate(table, "keys", tablefmt="simple_grid"))
-
     def advance_current_choice(self, the_next_name:str|None=None) -> None:
         if the_next_name is None:
             the_next_name = self.current_choice.next_choice_name
@@ -105,101 +95,6 @@ class Menu:
 
     def reset_choices(self) -> None:
         self.choices.clear()
-
-    def print_waypoints(self, waypoints:list[Waypoint]) -> None:
-        """ Format and print waypoints """
-        ways:list[str] = []
-        types:list[str] = []
-        xs:list[str] = []
-        ys:list[str] = []
-        orbitals:list[str] = []
-        traits:list[str] = []
-        for waypoint in waypoints:
-            ways.append(str(waypoint.waypoint))
-            types.append(waypoint.type)
-            xs.append(str(waypoint.x))
-            ys.append(str(waypoint.y))
-            orbitals.append(", ".join(list(map(lambda w: w.waypoint, waypoint.orbitals))))
-            traits.append(", ".join(list(map(lambda w: w.symbol, waypoint.traits))))
-        pretty_waypoints:dict[str,list[str]] = {
-            "Waypoint": ways,
-            "Type": types,
-            "X": xs,
-            "Y": ys,
-            "Orbital": orbitals,
-            "Traits": traits
-        }
-        self.print_list(pretty_waypoints)
-
-    def print_ship(self, ship:Ship) -> None:
-        self.print_list({
-            "Field": [
-                "Name",
-                "Symbol",
-                "Faction",
-                "Role",
-                "Crew",
-                "Cargo",
-                "Fuel",
-                "Frame",
-                "Current System",
-                "Current Status",
-                "Flight Mode",
-                "Departure",
-                "Arrival",
-                "Modules",
-                "Mounts",
-            ],
-            "Value": [
-                ship.name,
-                ship.symbol,
-                ship.faction,
-                ship.role,
-                f"{ship.crew.current} / {ship.crew.capacity}, required={ship.crew.required}, rotation={ship.crew.rotation}, morale={ship.crew.morale}, wages={ship.crew.wages}",
-                f"{ship.cargo.units} / {ship.cargo.capacity}, inventory=[{', '.join(list(map(lambda i: str(i), ship.cargo.inventory)))}]",
-                f"{ship.fuel.current} / {ship.fuel.capacity}",
-                f"{ship.frame.name} ({ship.frame.symbol}): condition={ship.frame.condition}, power_req={ship.frame.power_requirement}, crew_req={ship.frame.crew_requirement}, module_slots={ship.frame.module_slots}, mounting_points={ship.frame.mounting_points}",
-                ship.nav.system,
-                ship.nav.status,
-                ship.nav.flight_mode,
-                f"{ship.nav.route.departure.type} at {ship.nav.route.departure.symbol} ({ship.nav.route.departure.x}, {ship.nav.route.departure.y}) at {ship.nav.route.departure_at}",
-                f"{ship.nav.route.destination.type} at {ship.nav.route.destination.symbol} ({ship.nav.route.destination.x}, {ship.nav.route.destination.y}) at {ship.nav.route.arrival_at}",
-                "\n\n".join(list(map(lambda m: f"{m.name} ({m.symbol}): capacity={m.capacity}, power_req={m.power_requirement}, crew_req={m.crew_requirement}, slot_req={m.slot_requirement},\n{m.description}", ship.modules))),
-                "\n\n".join(list(map(lambda m: f"{m.name} ({m.symbol}): power_req={m.power_requirement}, crew_req={m.crew_requirement}, strength={m.strength},\n{m.description}", ship.mounts))),
-            ],
-        })
-
-    def print_contract(self, contract:Contract) -> None:
-        if self.hero.debug:
-            print(contract)
-        self.print_list({
-            "Field": [
-                "ID",
-                "Faction",
-                "Type",
-                "Accepted",
-                "Fulfilled",
-                "Expiration",
-                "Deadline",
-                "Term Deadline",
-                "Payment on Accepted",
-                "Payment on Fulfilled",
-                "Deliveries",
-            ],
-            "Value": [
-                contract.id,
-                contract.faction,
-                contract.type,
-                str(contract.accepted),
-                str(contract.fulfilled),
-                str(contract.expiration),
-                str(contract.deadline),
-                str(contract.terms.deadline),
-                str(contract.terms.payment_on_accepted),
-                str(contract.terms.payment_on_fulfilled),
-                ", ".join(list(map(lambda d: f"{d.units_fulfilled} / {d.units_required} of {d.trade} to {d.destination}", contract.terms.deliveries))),
-            ]
-        })
 
     def add_back(self, choices) -> str:
         cancel_text:str = "back"
@@ -224,95 +119,19 @@ class Menu:
                 case ChoiceType.ACTION:
                     match self.current_choice.route:
                         case "get_agent":
-                            agent:Agent = self.hero.get_agent()
-                            self.print_list({
-                                "Field": [
-                                    "Account ID",
-                                    "Symbol",
-                                    "Headquarter",
-                                    "Credits",
-                                    "Starting Faction",
-                                    "Ship Count",
-                                ],
-                                "Value": [
-                                    agent.account_id,
-                                    agent.symbol,
-                                    agent.headquarter.waypoint,
-                                    str(agent.credits),
-                                    agent.starting_faction,
-                                    str(agent.ship_count),
-                                ]
-                            })
+                            self.printer.print_agent(self.hero.get_agent())
                         case "get_systems":
-                            systems:list[System] = self.hero.get_systems()
-                            names:list[str] = []
-                            constellations:list[str] = []
-                            xs:list[str] = []
-                            ys:list[str] = []
-                            symbols:list[str] = []
-                            sectors:list[str] = []
-                            types:list[str] = []
-                            factions:list[str] = []
-                            for system in systems:
-                                names.append(system.name)
-                                constellations.append(system.constellation)
-                                xs.append(str(system.x))
-                                ys.append(str(system.y))
-                                symbols.append(system.symbol)
-                                types.append(system.system_type)
-                                sectors.append(system.sector)
-                                factions.append(", ".join(system.factions))
-                            pretty_systems:dict[str,list[str]] = {
-                                "Names": names,
-                                "Constellations": constellations,
-                                "X": xs,
-                                "Y": ys,
-                                "Symbols": symbols,
-                                "Sectors": sectors,
-                                "Types": types,
-                                "Factions": factions,
-                            }
-                            self.print_list(pretty_systems)
+                            self.printer.print_systems(self.hero.get_systems())
                         case "get_headquarter":
                             hq:Waypoint = self.hero.get_headquarter()
-                            self.print_list({
-                                "Fields": [
-                                    "Waypoint",
-                                    "Type",
-                                    "(X, Y)",
-                                    "Orbital",
-                                    "Traits",
-                                ],
-                                "Value": [
-                                    str(hq.waypoint),
-                                    hq.type,
-                                    f"({hq.x}, {hq.y})",
-                                    ", ".join(list(map(lambda w: w.waypoint, hq.orbitals))),
-                                    ", ".join(list(map(lambda w: w.symbol, hq.traits))),
-                                ]
-                            })
+                            self.printer.print_waypoint(hq)
                         case "get_headquarter_waypoints":
-                            self.print_waypoints(self.hero.get_headquarter_waypoints())
+                            self.printer.print_waypoints(self.hero.get_headquarter_waypoints())
                         case "get_ships":
                             self.hero.get_my_ships()
-                            names:list[str] = []
-                            systems:list[str] = []
-                            status:list[str] = []
-                            flight_mode:list[str] = []
-                            fuel:list[str] = []
-                            for name, ship in self.hero.ships_by_symbol.items():
-                                names.append(name)
-                                systems.append(ship.nav.system)
-                                status.append(ship.nav.status)
-                                flight_mode.append(ship.nav.flight_mode)
-                                fuel.append(f"{ship.fuel.current} / {ship.fuel.capacity}"),
-                            self.print_list({
-                                "Names": names,
-                                "Current System": systems,
-                                "Status": status,
-                                "Flight Mode": flight_mode,
-                                "Fuel": fuel,
-                            })
+                            ships:list[Ship] = self.hero.ships_by_symbol.values()
+                            self.printer.print_ships(ships)
+                            names:list[str] = [ship.name for ship in ships]
                             cancel_text:str = self.add_back(names)
                             ship_name:str = self.ask_with_choice("Which ship do you want to view?", names)
                             if ship_name == cancel_text:
@@ -320,14 +139,14 @@ class Menu:
                                 return True
 
                             ship:Ship = self.hero.ships_by_symbol[ship_name]
-                            self.print_ship(ship)
+                            self.printer.print_ship(ship)
                         case "get_contracts":
                             contracts = self.hero.get_contracts()
                             contract_ids = list(map(lambda c: c.id, contracts))
                             if len(contracts) == 0:
                                 print("No contracts")
                             else:
-                                self.print_list({"Contract IDs": contract_ids})
+                                self.printer.print_list({"Contract IDs": contract_ids})
                                 cancel_text:str = self.add_back(contract_ids)
                                 contract_id:str = self.ask_with_choice("Which contract do you want to view?", contract_ids)
 
@@ -339,7 +158,7 @@ class Menu:
                                 if contract is None:
                                     print("Contract not found")
                                 else:
-                                    self.print_contract(contract)
+                                    self.printer.print_contract(contract)
                                     if not contract.accepted:
                                         match self.ask_with_choice("Do you want to accept contract?", ["yes", "no"]):
                                             case "yes":
@@ -357,7 +176,7 @@ class Menu:
                             if matching is None:
                                 print("Unable to find matching system.")
                             else:
-                                self.print_waypoints(self.hero.get_waypoints(matching.symbol))
+                                self.printer.print_waypoints(self.hero.get_waypoints(matching.symbol))
 
                     self.advance_current_choice()
                     return True
