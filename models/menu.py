@@ -9,7 +9,7 @@ from models.agent import Agent
 from models.system import System
 from models.waypoint import Waypoint
 from models.ship import Ship
-from model.contract import Contract
+from models.contract import Contract
 
 @dataclass
 class Option:
