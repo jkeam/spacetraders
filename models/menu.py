@@ -95,6 +95,17 @@ class Menu:
             the_next_name = self.current_choice.next_choice_name
         self.current_choice = self.choice_by_name[the_next_name]
 
+    def back_current_choice(self) -> None:
+        if self.current_choice is None:
+            return
+        self.current_choice = self.choices.pop()
+        # keep popping until we get a prompt type
+        while self.current_choice.choice_type != ChoiceType.PROMPT:
+            self.current_choice = self.choices.pop()
+
+    def reset_choices(self) -> None:
+        self.choices.clear()
+
     def print_waypoints(self, waypoints:list[Waypoint]):
         """ Format and print waypoints """
         ways:list[str] = []
@@ -124,7 +135,7 @@ class Menu:
         """ True to keep going, False to quit """
         if self.current_choice is not None:
             if self.current_choice.is_root():
-                self.choices.clear()
+                self.reset_choices()
             self.choices.append(self.current_choice)
             match self.current_choice.choice_type:
                 case ChoiceType.PROMPT:
@@ -313,21 +324,18 @@ class Menu:
                                                 print("Accepted!")
                         case "get_waypoints":
                             system_names:list[str] = list(map(lambda s: s.name, self.hero.systems))
-                            cancel_text:str = "No go back"
+                            cancel_text:str = "back"
                             system_names.insert(0, cancel_text)
                             system:str = self.ask_with_choice("Want waypoints?", system_names)
-                            if system != cancel_text:
-                                matching:System|None = next((s for s in self.hero.systems if s.name == system), None)
-                                if matching is None:
-                                    print("Unable to find matching system.")
-                                else:
-                                    self.print_waypoints(self.hero.get_waypoints(matching.symbol))
-                            else:
-                                self.choices.pop()  # pop get_waypoints
-                                self.choices.pop()  # pop systems
-                                the_back:Choice = self.choices.pop()  # back
-                                self.advance_current_choice(the_back.name)
+                            if system == cancel_text:
+                                self.back_current_choice()
                                 return True
+
+                            matching:System|None = next((s for s in self.hero.systems if s.name == system), None)
+                            if matching is None:
+                                print("Unable to find matching system.")
+                            else:
+                                self.print_waypoints(self.hero.get_waypoints(matching.symbol))
 
                     self.advance_current_choice()
                     return True

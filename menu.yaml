@@ -10,8 +10,10 @@ choices:
         next: quit
   - name: info
     type: prompt
-    text: Objects
+    text: Info
     options:
+      - text: back
+        next: root
       - text: agent
         next: agent
       - text: systems
@@ -31,26 +33,26 @@ choices:
   - name: agent
     type: action
     route: get_agent
-    next: root
+    next: info
   - name: headquarter
     type: action
     route: get_headquarter
-    next: root
+    next: info
   - name: headquarter_waypoints
     type: action
     route: get_headquarter_waypoints
-    next: root
+    next: info
   - name: ships
     type: action
     route: get_ships
-    next: root
+    next: info
   - name: contracts
     type: action
     route: get_contracts
-    next: root
+    next: info
   - name: get_waypoints
     type: action
     route: get_waypoints
-    next: root
+    next: info
   - name: quit
     type: action
