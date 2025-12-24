@@ -17,9 +17,8 @@ def main() -> None:
     menu.init_from_file("menu.yaml")
 
     try:
-        keep_going:bool = True
-        while keep_going:
-            keep_going = menu.query_user()
+        while menu.query_user():
+            pass
     except KeyboardInterrupt:
         print("Thank You!")
 
