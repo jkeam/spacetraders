@@ -49,8 +49,8 @@ class Menu:
     def __init__(self, hero:Hero) -> None:
         self.hero = hero
         self.choice_by_name:dict[str,Choice] = {}
-        # default exit choice
-        self.current_choice:Choice = Choice("quit", ChoiceType.ACTION)
+        self.default_quit_choice = Choice("quit", ChoiceType.ACTION)
+        self.current_choice:Choice = self.default_quit_choice
         self.printer:Printer = Printer(self.hero.debug)
 
     def init_from_file(self, filename:str):
@@ -88,14 +88,14 @@ class Menu:
             the_next_name = self.current_choice.next_choice_name
         if the_next_name == "quit":
             return False
-        self.current_choice = self.choice_by_name.get(the_next_name, "quit")
-        return self.current_choice != "quit"
+        self.current_choice:Choice = self.choice_by_name.get(the_next_name, self.default_quit_choice)
+        return self.current_choice.name != "quit"
 
     def back_current_choice(self) -> None:
         if self.current_choice is None:
             return
         back:str = self.current_choice.back_choice_name
-        self.current_choice = self.choice_by_name.get(back, "quit")
+        self.current_choice:Choice = self.choice_by_name.get(back, self.default_quit_choice)
 
     def add_back(self, choices:list[str]) -> str:
         cancel_text:str = "back"
