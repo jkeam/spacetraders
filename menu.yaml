@@ -51,7 +51,11 @@ choices:
   - name: get_contracts
     type: action
     route: get_contracts
-    next: root
+    next: get_contract
+  - name: get_contract
+    type: action
+    route: get_contract
+    next: get_contracts
   - name: get_waypoints
     type: action
     route: get_waypoints

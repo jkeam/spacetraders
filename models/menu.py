@@ -155,23 +155,25 @@ class Menu:
                                 print("No contracts")
                             else:
                                 self.printer.print_list({"Contract IDs": contract_ids})
-                                cancel_text:str = self.add_back(contract_ids)
-                                contract_id:str = self.ask_with_choice("Which contract do you want to view?", contract_ids)
+                        case "get_contract":
+                            contract_ids = list(map(lambda c: c.id, self.hero.get_contracts()))
+                            cancel_text:str = self.add_back(contract_ids)
+                            contract_id:str = self.ask_with_choice("Which contract do you want to view?", contract_ids)
 
-                                if contract_id == cancel_text:
-                                    self.back_current_choice()
-                                    return True
+                            if contract_id == cancel_text:
+                                self.back_current_choice()
+                                return True
 
-                                contract:Contract|None = self.hero.get_contract_by_id(contract_id)
-                                if contract is None:
-                                    print("Contract not found")
-                                else:
-                                    self.printer.print_contract(contract)
-                                    if not contract.accepted:
-                                        match self.ask_with_choice("Do you want to accept contract?", ["yes", "no"]):
-                                            case "yes":
-                                                self.hero.accept_contract(contract_id)
-                                                print("Accepted!")
+                            contract:Contract|None = self.hero.get_contract_by_id(contract_id)
+                            if contract is None:
+                                print("Contract not found")
+                            else:
+                                self.printer.print_contract(contract)
+                                if not contract.accepted:
+                                    match self.ask_with_choice("Do you want to accept contract?", ["yes", "no"]):
+                                        case "yes":
+                                            self.hero.accept_contract(contract_id)
+                                            print("Accepted!")
                         case "get_waypoints":
                             system_names:list[str] = list(map(lambda s: s.name, self.hero.systems))
                             cancel_text:str = self.add_back(system_names)
