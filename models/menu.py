@@ -1,4 +1,5 @@
 import yaml
+from collections import deque
 from tabulate import tabulate
 from dataclasses import dataclass
 from enum import Enum
@@ -37,6 +38,9 @@ class Choice:
         self.next_choice_name = ""
         self.options = []
 
+    def is_root(self) -> bool:
+        return self.name == "root"
+
 class Menu:
     """ Menu Handler """
     def __init__(self, hero:Hero) -> None:
@@ -44,6 +48,7 @@ class Menu:
         self.choice_by_name:dict[str,Choice] = {}
         # default exit choice
         self.current_choice:Choice = Choice("quit", ChoiceType.ACTION)
+        self.choices:deque[Choice] = deque()
 
     def init_from_file(self, filename:str):
         with open(filename, "r") as stream:
@@ -118,6 +123,9 @@ class Menu:
     def query_user(self) -> bool:
         """ True to keep going, False to quit """
         if self.current_choice is not None:
+            if self.current_choice.is_root():
+                self.choices.clear()
+            self.choices.append(self.current_choice)
             match self.current_choice.choice_type:
                 case ChoiceType.PROMPT:
                     choice:str = self.ask_with_choice(
@@ -311,9 +319,15 @@ class Menu:
                             if system != cancel_text:
                                 matching:System|None = next((s for s in self.hero.systems if s.name == system), None)
                                 if matching is None:
-                                    print()
+                                    print("Unable to find matching system.")
                                 else:
                                     self.print_waypoints(self.hero.get_waypoints(matching.symbol))
+                            else:
+                                self.choices.pop()  # pop get_waypoints
+                                self.choices.pop()  # pop systems
+                                the_back:Choice = self.choices.pop()  # back
+                                self.advance_current_choice(the_back.name)
+                                return True
 
                     self.advance_current_choice()
                     return True
