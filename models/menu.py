@@ -110,8 +110,11 @@ class Menu:
                     choice:str = self.ask_with_choice(
                             self.current_choice.text,
                             list(map(lambda x: x.text, self.current_choice.options)))
+                    options:list[Option] = self.current_choice.options
                     matching:Option = next(
-                            (n for n in self.current_choice.options if n.text == choice), Option("", "root"))
+                            (n for n in options if n.text == choice),
+                            Option("", "root")
+                    )
                     return self.advance_current_choice(matching.next_choice_name)
                 case ChoiceType.ACTION:
                     match self.current_choice.route:
@@ -128,11 +131,11 @@ class Menu:
                             self.printer.print_waypoints(self.hero.get_headquarter_waypoints())
                         case "get_ships":
                             self.hero.get_my_ships()
-                            ships:list[Ship] = self.hero.ships_by_symbol.values()
+                            ships:list[Ship] = list(self.hero.ships_by_symbol.values())
                             self.printer.print_ships(ships)
                             names:list[str] = [ship.name for ship in ships]
                         case "get_ship":
-                            ships:list[Ship] = self.hero.ships_by_symbol.values()
+                            ships:list[Ship] = list(self.hero.ships_by_symbol.values())
                             names:list[str] = [ship.name for ship in ships]
                             cancel_text:str = self.add_back(names)
                             ship_name:str = self.ask_with_choice("Which ship do you want to view?", names)
