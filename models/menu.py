@@ -106,7 +106,7 @@ class Menu:
     def reset_choices(self) -> None:
         self.choices.clear()
 
-    def print_waypoints(self, waypoints:list[Waypoint]):
+    def print_waypoints(self, waypoints:list[Waypoint]) -> None:
         """ Format and print waypoints """
         ways:list[str] = []
         types:list[str] = []
@@ -130,6 +130,81 @@ class Menu:
             "Traits": traits
         }
         self.print_list(pretty_waypoints)
+
+    def print_ship(self, ship:Ship) -> None:
+        self.print_list({
+            "Field": [
+                "Name",
+                "Symbol",
+                "Faction",
+                "Role",
+                "Crew",
+                "Cargo",
+                "Fuel",
+                "Frame",
+                "Current System",
+                "Current Status",
+                "Flight Mode",
+                "Departure",
+                "Arrival",
+                "Modules",
+                "Mounts",
+            ],
+            "Value": [
+                ship.name,
+                ship.symbol,
+                ship.faction,
+                ship.role,
+                f"{ship.crew.current} / {ship.crew.capacity}, required={ship.crew.required}, rotation={ship.crew.rotation}, morale={ship.crew.morale}, wages={ship.crew.wages}",
+                f"{ship.cargo.units} / {ship.cargo.capacity}, inventory=[{', '.join(list(map(lambda i: str(i), ship.cargo.inventory)))}]",
+                f"{ship.fuel.current} / {ship.fuel.capacity}",
+                f"{ship.frame.name} ({ship.frame.symbol}): condition={ship.frame.condition}, power_req={ship.frame.power_requirement}, crew_req={ship.frame.crew_requirement}, module_slots={ship.frame.module_slots}, mounting_points={ship.frame.mounting_points}",
+                ship.nav.system,
+                ship.nav.status,
+                ship.nav.flight_mode,
+                f"{ship.nav.route.departure.type} at {ship.nav.route.departure.symbol} ({ship.nav.route.departure.x}, {ship.nav.route.departure.y}) at {ship.nav.route.departure_at}",
+                f"{ship.nav.route.destination.type} at {ship.nav.route.destination.symbol} ({ship.nav.route.destination.x}, {ship.nav.route.destination.y}) at {ship.nav.route.arrival_at}",
+                "\n\n".join(list(map(lambda m: f"{m.name} ({m.symbol}): capacity={m.capacity}, power_req={m.power_requirement}, crew_req={m.crew_requirement}, slot_req={m.slot_requirement},\n{m.description}", ship.modules))),
+                "\n\n".join(list(map(lambda m: f"{m.name} ({m.symbol}): power_req={m.power_requirement}, crew_req={m.crew_requirement}, strength={m.strength},\n{m.description}", ship.mounts))),
+            ],
+        })
+
+    def print_contract(self, contract:Contract) -> None:
+        if self.hero.debug:
+            print(contract)
+        self.print_list({
+            "Field": [
+                "ID",
+                "Faction",
+                "Type",
+                "Accepted",
+                "Fulfilled",
+                "Expiration",
+                "Deadline",
+                "Term Deadline",
+                "Payment on Accepted",
+                "Payment on Fulfilled",
+                "Deliveries",
+            ],
+            "Value": [
+                contract.id,
+                contract.faction,
+                contract.type,
+                str(contract.accepted),
+                str(contract.fulfilled),
+                str(contract.expiration),
+                str(contract.deadline),
+                str(contract.terms.deadline),
+                str(contract.terms.payment_on_accepted),
+                str(contract.terms.payment_on_fulfilled),
+                ", ".join(list(map(lambda d: f"{d.units_fulfilled} / {d.units_required} of {d.trade} to {d.destination}", contract.terms.deliveries))),
+            ]
+        })
+
+    def add_back(self, choices) -> str:
+        cancel_text:str = "back"
+        choices.insert(0, cancel_text)
+        return cancel_text
 
     def query_user(self) -> bool:
         """ True to keep going, False to quit """
@@ -238,44 +313,14 @@ class Menu:
                                 "Flight Mode": flight_mode,
                                 "Fuel": fuel,
                             })
+                            cancel_text:str = self.add_back(names)
                             ship_name:str = self.ask_with_choice("Which ship do you want to view?", names)
+                            if ship_name == cancel_text:
+                                self.back_current_choice()
+                                return True
+
                             ship:Ship = self.hero.ships_by_symbol[ship_name]
-                            self.print_list({
-                                "Field": [
-                                    "Name",
-                                    "Symbol",
-                                    "Faction",
-                                    "Role",
-                                    "Crew",
-                                    "Cargo",
-                                    "Fuel",
-                                    "Frame",
-                                    "Current System",
-                                    "Current Status",
-                                    "Flight Mode",
-                                    "Departure",
-                                    "Arrival",
-                                    "Modules",
-                                    "Mounts",
-                                ],
-                                "Value": [
-                                    ship.name,
-                                    ship.symbol,
-                                    ship.faction,
-                                    ship.role,
-                                    f"{ship.crew.current} / {ship.crew.capacity}, required={ship.crew.required}, rotation={ship.crew.rotation}, morale={ship.crew.morale}, wages={ship.crew.wages}",
-                                    f"{ship.cargo.units} / {ship.cargo.capacity}, inventory=[{', '.join(list(map(lambda i: str(i), ship.cargo.inventory)))}]",
-                                    f"{ship.fuel.current} / {ship.fuel.capacity}",
-                                    f"{ship.frame.name} ({ship.frame.symbol}): condition={ship.frame.condition}, power_req={ship.frame.power_requirement}, crew_req={ship.frame.crew_requirement}, module_slots={ship.frame.module_slots}, mounting_points={ship.frame.mounting_points}",
-                                    ship.nav.system,
-                                    ship.nav.status,
-                                    ship.nav.flight_mode,
-                                    f"{ship.nav.route.departure.type} at {ship.nav.route.departure.symbol} ({ship.nav.route.departure.x}, {ship.nav.route.departure.y}) at {ship.nav.route.departure_at}",
-                                    f"{ship.nav.route.destination.type} at {ship.nav.route.destination.symbol} ({ship.nav.route.destination.x}, {ship.nav.route.destination.y}) at {ship.nav.route.arrival_at}",
-                                    "\n\n".join(list(map(lambda m: f"{m.name} ({m.symbol}): capacity={m.capacity}, power_req={m.power_requirement}, crew_req={m.crew_requirement}, slot_req={m.slot_requirement},\n{m.description}", ship.modules))),
-                                    "\n\n".join(list(map(lambda m: f"{m.name} ({m.symbol}): power_req={m.power_requirement}, crew_req={m.crew_requirement}, strength={m.strength},\n{m.description}", ship.mounts))),
-                                ],
-                            })
+                            self.print_ship(ship)
                         case "get_contracts":
                             contracts = self.hero.get_contracts()
                             contract_ids = list(map(lambda c: c.id, contracts))
@@ -283,41 +328,18 @@ class Menu:
                                 print("No contracts")
                             else:
                                 self.print_list({"Contract IDs": contract_ids})
+                                cancel_text:str = self.add_back(contract_ids)
                                 contract_id:str = self.ask_with_choice("Which contract do you want to view?", contract_ids)
+
+                                if contract_id == cancel_text:
+                                    self.back_current_choice()
+                                    return True
+
                                 contract:Contract|None = self.hero.get_contract_by_id(contract_id)
                                 if contract is None:
                                     print("Contract not found")
                                 else:
-                                    if self.hero.debug:
-                                        print(contract)
-                                    self.print_list({
-                                        "Field": [
-                                            "ID",
-                                            "Faction",
-                                            "Type",
-                                            "Accepted",
-                                            "Fulfilled",
-                                            "Expiration",
-                                            "Deadline",
-                                            "Term Deadline",
-                                            "Payment on Accepted",
-                                            "Payment on Fulfilled",
-                                            "Deliveries",
-                                        ],
-                                        "Value": [
-                                            contract.id,
-                                            contract.faction,
-                                            contract.type,
-                                            str(contract.accepted),
-                                            str(contract.fulfilled),
-                                            str(contract.expiration),
-                                            str(contract.deadline),
-                                            str(contract.terms.deadline),
-                                            str(contract.terms.payment_on_accepted),
-                                            str(contract.terms.payment_on_fulfilled),
-                                            ", ".join(list(map(lambda d: f"{d.units_fulfilled} / {d.units_required} of {d.trade} to {d.destination}", contract.terms.deliveries))),
-                                        ]
-                                    })
+                                    self.print_contract(contract)
                                     if not contract.accepted:
                                         match self.ask_with_choice("Do you want to accept contract?", ["yes", "no"]):
                                             case "yes":
@@ -325,8 +347,7 @@ class Menu:
                                                 print("Accepted!")
                         case "get_waypoints":
                             system_names:list[str] = list(map(lambda s: s.name, self.hero.systems))
-                            cancel_text:str = "back"
-                            system_names.insert(0, cancel_text)
+                            cancel_text:str = self.add_back(system_names)
                             system:str = self.ask_with_choice("Want waypoints?", system_names)
                             if system == cancel_text:
                                 self.back_current_choice()

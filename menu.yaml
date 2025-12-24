@@ -49,10 +49,10 @@ choices:
   - name: contracts
     type: action
     route: get_contracts
-    next: info
+    next: contracts
   - name: get_waypoints
     type: action
     route: get_waypoints
-    next: info
+    next: get_waypoints
   - name: quit
     type: action
