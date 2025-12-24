@@ -1,6 +1,6 @@
 from yaml import dump, safe_load, YAMLError
 from time import sleep
-from models.ship import Ship
+from models.ship import Ship, ShipCargo
 from models.waypoint import Waypoint
 from models.location import Location
 from models.spacetrader import Spacetrader
@@ -145,7 +145,11 @@ class Hero:
         """ Get all the waypoints in the same system as the headquarter """
         if self.headquarter is None:
             self.get_agent()
-        raw_waypoints = self.api.get_auth(f"systems/{self.headquarter.system}/waypoints")["data"]
+        return self.get_waypoints(self.headquarter.system)
+
+    def get_waypoints(self, system:str) -> list[Waypoint]:
+        """ Get all the waypoints given a system """
+        raw_waypoints = self.api.get_auth(f"systems/{system}/waypoints")["data"]
         self.headquarter_waypoints = list(map(lambda w: Waypoint(w), raw_waypoints))
         if self.debug:
             print("Get Waypoints")

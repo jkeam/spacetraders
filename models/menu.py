@@ -90,9 +90,8 @@ class Menu:
             the_next_name = self.current_choice.next_choice_name
         self.current_choice = self.choice_by_name[the_next_name]
 
-    def print_waypoints():
-        # FIXME
-        waypoints:list[Waypoint] = self.hero.get_headquarter_waypoints()
+    def print_waypoints(self, waypoints:list[Waypoint]):
+        """ Format and print waypoints """
         ways:list[str] = []
         types:list[str] = []
         xs:list[str] = []
@@ -199,29 +198,7 @@ class Menu:
                                 ]
                             })
                         case "get_headquarter_waypoints":
-                            waypoints:list[Waypoint] = self.hero.get_headquarter_waypoints()
-                            ways:list[str] = []
-                            types:list[str] = []
-                            xs:list[str] = []
-                            ys:list[str] = []
-                            orbitals:list[str] = []
-                            traits:list[str] = []
-                            for waypoint in waypoints:
-                                ways.append(str(waypoint.waypoint))
-                                types.append(waypoint.type)
-                                xs.append(str(waypoint.x))
-                                ys.append(str(waypoint.y))
-                                orbitals.append(", ".join(list(map(lambda w: w.waypoint, waypoint.orbitals))))
-                                traits.append(", ".join(list(map(lambda w: w.symbol, waypoint.traits))))
-                            pretty_waypoints:dict[str,list[str]] = {
-                                "Waypoint": ways,
-                                "Type": types,
-                                "X": xs,
-                                "Y": ys,
-                                "Orbital": orbitals,
-                                "Traits": traits
-                            }
-                            self.print_list(pretty_waypoints)
+                            self.print_waypoints(self.hero.get_headquarter_waypoints())
                         case "get_ships":
                             self.hero.get_my_ships()
                             names:list[str] = []
@@ -328,8 +305,15 @@ class Menu:
                                                 print("Accepted!")
                         case "get_waypoints":
                             system_names:list[str] = list(map(lambda s: s.name, self.hero.systems))
-                            system:str = self.ask_with_choice("Which system", system_names)
-                            print(system.waypoints)
+                            cancel_text:str = "No go back"
+                            system_names.insert(0, cancel_text)
+                            system:str = self.ask_with_choice("Want waypoints?", system_names)
+                            if system != cancel_text:
+                                matching:System|None = next((s for s in self.hero.systems if s.name == system), None)
+                                if matching is None:
+                                    print()
+                                else:
+                                    self.print_waypoints(self.hero.get_waypoints(matching.symbol))
 
                     self.advance_current_choice()
                     return True
