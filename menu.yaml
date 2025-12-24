@@ -47,7 +47,13 @@ choices:
   - name: get_ship
     type: action
     route: get_ship
-    next: get_ships
+    next: update_ship
+    back: root
+  - name: update_ship
+    type: action
+    route: update_ship
+    next: update_ship
+    back: get_ship
   - name: get_contracts
     type: action
     route: get_contracts
@@ -55,10 +61,17 @@ choices:
   - name: get_contract
     type: action
     route: get_contract
-    next: get_contracts
+    next: update_contract
+    back: root
+  - name: update_contract
+    type: action
+    route: update_contract
+    next: update_contract
+    back: get_contract
   - name: get_waypoints
     type: action
     route: get_waypoints
     next: get_waypoints
+    back: root
   - name: quit
     type: action

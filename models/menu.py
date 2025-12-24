@@ -30,6 +30,7 @@ class Choice:
     options:list[Option]
     route:str
     next_choice_name:str
+    back_choice_name:str
 
     def __init__(self, name:str, choice_type:ChoiceType):
         self.name = name
@@ -38,6 +39,7 @@ class Choice:
         self.route = ""
         self.next_choice_name = ""
         self.options = []
+        self.back_choice_name = ""
 
     def is_root(self) -> bool:
         return self.name == "root"
@@ -49,7 +51,6 @@ class Menu:
         self.choice_by_name:dict[str,Choice] = {}
         # default exit choice
         self.current_choice:Choice = Choice("quit", ChoiceType.ACTION)
-        self.choices:deque[Choice] = deque()
         self.printer:Printer = Printer(self.hero.debug)
 
     def init_from_file(self, filename:str):
@@ -62,6 +63,7 @@ class Menu:
                     choice.options = list(map(lambda o: Option(o["text"], o["next"]), obj.get("options", [])))
                     choice.next_choice_name = obj.get("next", "")
                     choice.route = obj.get("route", "")
+                    choice.back_choice_name = obj.get("back", "")
                     self.choice_by_name[choice.name] = choice
                 # root and quit are a required node
                 # action needs route
@@ -92,15 +94,10 @@ class Menu:
     def back_current_choice(self) -> None:
         if self.current_choice is None:
             return
-        self.current_choice = self.choices.pop()
-        # keep popping until we get a prompt type
-        while self.current_choice.choice_type != ChoiceType.PROMPT:
-            self.current_choice = self.choices.pop()
+        back:str = self.current_choice.back_choice_name
+        self.current_choice = self.choice_by_name.get(back, "quit")
 
-    def reset_choices(self) -> None:
-        self.choices.clear()
-
-    def add_back(self, choices) -> str:
+    def add_back(self, choices:list[str]) -> str:
         cancel_text:str = "back"
         choices.insert(0, cancel_text)
         return cancel_text
@@ -108,9 +105,6 @@ class Menu:
     def query_user(self) -> bool:
         """ True to keep going, False to quit """
         if self.current_choice is not None:
-            if self.current_choice.is_root():
-                self.reset_choices()
-            self.choices.append(self.current_choice)
             match self.current_choice.choice_type:
                 case ChoiceType.PROMPT:
                     choice:str = self.ask_with_choice(
@@ -148,6 +142,14 @@ class Menu:
 
                             ship:Ship = self.hero.ships_by_symbol[ship_name]
                             self.printer.print_ship(ship)
+                        case "update_ship":
+                            actions:list[str] = ["Move"]
+                            cancel_text:str = self.add_back(actions)
+                            action:str = self.ask_with_choice("Actions?", actions)
+                            if action == cancel_text:
+                                self.back_current_choice()
+                                return True
+                            print(action)
                         case "get_contracts":
                             contracts = self.hero.get_contracts()
                             contract_ids = list(map(lambda c: c.id, contracts))
@@ -174,6 +176,14 @@ class Menu:
                                         case "yes":
                                             self.hero.accept_contract(contract_id)
                                             print("Accepted!")
+                        case "update_contract":
+                            actions:list[str] = ["Accept"]
+                            cancel_text:str = self.add_back(actions)
+                            action:str = self.ask_with_choice("Actions?", actions)
+                            if action == cancel_text:
+                                self.back_current_choice()
+                                return True
+                            print(action)
                         case "get_waypoints":
                             system_names:list[str] = list(map(lambda s: s.name, self.hero.systems))
                             cancel_text:str = self.add_back(system_names)
