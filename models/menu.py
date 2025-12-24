@@ -110,12 +110,12 @@ class Menu:
                     choice:str = self.ask_with_choice(
                             self.current_choice.text,
                             list(map(lambda x: x.text, self.current_choice.options)))
-                    options:list[Option] = self.current_choice.options
-                    matching:Option = next(
-                            (n for n in options if n.text == choice),
-                            Option("", "root")
-                    )
-                    return self.advance_current_choice(matching.next_choice_name)
+                    matching_option:Option = Option("", "root")
+                    for option in self.current_choice.options:
+                        if option.text == choice:
+                            matching_option = option
+                            break
+                    return self.advance_current_choice(matching_option.next_choice_name)
                 case ChoiceType.ACTION:
                     match self.current_choice.route:
                         case "quit":
