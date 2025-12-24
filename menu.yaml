@@ -20,12 +20,20 @@ choices:
         next: systems
       - text: headquarter
         next: headquarter
-      - text: headquarter waypoints
-        next: headquarter_waypoints
       - text: ships
         next: ships
       - text: contracts
         next: contracts
+  - name: headquarter
+    type: prompt
+    text: Pick one
+    options:
+      - text: back
+        next: info
+      - text: Headquarter Info
+        next: get_headquarter
+      - text: Headquarter Waypoints
+        next: get_headquarter_waypoints
   - name: systems
     type: action
     route: get_systems
@@ -34,14 +42,14 @@ choices:
     type: action
     route: get_agent
     next: info
-  - name: headquarter
+  - name: get_headquarter
     type: action
     route: get_headquarter
-    next: info
-  - name: headquarter_waypoints
+    next: headquarter
+  - name: get_headquarter_waypoints
     type: action
     route: get_headquarter_waypoints
-    next: info
+    next: headquarter
   - name: ships
     type: action
     route: get_ships
