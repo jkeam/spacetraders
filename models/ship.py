@@ -4,6 +4,21 @@ from models.location import Location
 from models.spacetrader import Spacetrader
 
 @dataclass
+class ShipExtraction:
+    """ Result of a ship extracting/mining """
+    ship_symbol:str
+    yield_symbol:str
+    yield_units:str
+
+@dataclass
+class ShipCooldown:
+    """ Ship cooldown after an action """
+    ship_symbol:str
+    total_seconds:int
+    remaining_seconds:int
+    expiration:dt
+
+@dataclass
 class ShipPoint:
     """ Point of a route """
     symbol:str
@@ -120,6 +135,18 @@ class ShipMount:
     strength:int
     power_requirement:int
     crew_requirement:int
+
+@dataclass
+class Transaction:
+    """ Transaction result """
+    waypoint_symbol:str
+    ship_symbol:str
+    trade_symbol:str
+    transaction_type:str
+    units:int
+    price_per_unit:int
+    total_price:int
+    bought_at:dt
 
 class Ship:
     """ Ship """
@@ -245,11 +272,58 @@ class Ship:
 
     def refuel(self) -> dict:
         """ Refuel ship """
-        return self.api.post_auth(f"my/ships/{self.symbol}/refuel")
+        resp = self.api.post_auth(f"my/ships/{self.symbol}/refuel")["data"]
+        raw_fuel = resp["fuel"]
+        fuel:ShipFuel = ShipFuel(
+            raw_fuel["current"],
+            raw_fuel["capacity"],
+            raw_fuel["consumed"]["amount"],
+            raw_fuel["consumed"]["timestamp"],
+        )
+        raw_transaction = resp["transaction"]
+        transaction:Transaction = Transaction(
+            raw_transaction["waypointSymbol"],
+            raw_transaction["shipSymbol"],
+            raw_transaction["tradeSymbol"],
+            raw_transaction["type"],
+            raw_transaction["units"],
+            raw_transaction["pricePerUnit"],
+            raw_transaction["totalPrice"],
+            raw_transaction["timestamp"],
+        )
+        return { "agent": resp["agent"], "fuel": fuel, "transaction": transaction }
 
     def mine(self) -> dict:
         """ Mine resources """
-        return self.api.post_auth(f"my/ships/{self.symbol}/extract")
+        try:
+            resp = self.api.post_auth(f"my/ships/{self.symbol}/extract")["data"]
+            raw_extraction = resp["extraction"]
+            raw_cooldown = resp["cooldown"]
+            raw_cargo = resp["cargo"]
+            extraction:ShipExtraction = ShipExtraction(
+                    raw_extraction["shipSymbol"],
+                    raw_extraction["yield"]["symbol"],
+                    raw_extraction["yield"]["units"],
+            )
+            cooldown:ShipCooldown = ShipCooldown(
+                    raw_cooldown["shipSymbol"],
+                    raw_cooldown["totalSeconds"],
+                    raw_cooldown["remainingSeconds"],
+                    raw_cooldown["expiration"],
+            )
+            cargo:ShipCargo = ShipCargo(
+                    raw_cargo["capacity"],
+                    raw_cargo["units"],
+                    list(map(lambda i: ShipCargoItem(i["symbol"], i["name"], i["description"], i["units"]), raw_cargo["inventory"])))
+            return {
+                "extraction": extraction,
+                "cooldown": cooldown,
+                "cargo": cargo,
+                "events": resp["events"],
+                "modifiers": resp["modifiers"],
+            }
+        except Exception as e:
+            print(e)
 
     def get_cargo(self) -> dict:
         """ Get Cargo """

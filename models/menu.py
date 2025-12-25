@@ -182,9 +182,8 @@ class Menu:
 
                             ship:Ship = self.hero.ships_by_symbol[ship_name]
                             self.current_ship = ship
-                            self.printer.print_ship(ship)
                         case "update_ship":
-                            actions:list[str] = ["Info", "Move", "Orbit", "Dock"]
+                            actions:list[str] = ["Info", "Move", "Orbit", "Dock", "Refuel", "Extract"]
                             # fail the app immediately if ship isn't set here
                             #   as it should be
                             if self.current_ship is None:
@@ -210,6 +209,14 @@ class Menu:
                                     nav:ShipNav = self.current_ship.dock()
                                     if self.debug:
                                         print(nav)
+                                case "Refuel":
+                                    resp = self.current_ship.refuel()
+                                    if self.debug:
+                                        print(resp)
+                                case "Extract":
+                                    resp = self.current_ship.mine()
+                                    if self.debug:
+                                        print(resp)
                         case "get_contracts":
                             contracts = self.hero.get_contracts()
                             contract_ids = list(map(lambda c: c.id, contracts))
