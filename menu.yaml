@@ -9,9 +9,11 @@ choices:
       - text: Headquarter
         next: headquarter
       - text: Ships
-        next: ships
+        next: get_my_ships
       - text: Contracts
         next: get_contracts
+      - text: Systems
+        next: systems
       - text: Quit
         next: quit
   - name: headquarter
@@ -24,16 +26,28 @@ choices:
         next: get_headquarter
       - text: Headquarter Waypoints
         next: get_headquarter_waypoints
+      - text: Headquarter Shipyard Waypoints
+        next: get_headquarter_shipyard_waypoints
       - text: Buy Headquarter Drone
         next: buy_headquarter_drone
-  - name: ships
-    type: prompt
-    text: Ships
-    options:
-      - text: My Ships
-        next: get_my_ships
-      - text: All Ships
-        next: get_ships
+  - name: get_headquarter_shipyard_waypoint
+    type: action
+    route: get_headquarter_shipyard_waypoint
+    next: get_headquarter_ships
+    back: headquarter
+  - name: get_headquarter_ships
+    type: action
+    route: get_headquarter_ships
+    next: update_headquarter_ships
+    back: get_headquarter_shipyard_waypoint
+  - name: update_headquarter_ships
+    type: action
+    route: update_headquarter_ships
+    next: headquarter
+  - name: get_headquarter_shipyard_waypoints
+    type: action
+    route: get_headquarter_shipyard_waypoints
+    next: get_headquarter_shipyard_waypoint
   - name: systems
     type: action
     route: get_systems
@@ -54,19 +68,16 @@ choices:
     type: action
     route: buy_headquarter_drone
     next: headquarter
-  - name: get_ships
-    type: action
-    route: get_ships
-    next: get_ship
   - name: get_my_ships
     type: action
     route: get_my_ships
-    next: ships
+    next: get_ship
+    back: root
   - name: get_ship
     type: action
     route: get_ship
     next: update_ship
-    back: ships
+    back: root
   - name: update_ship
     type: action
     route: update_ship

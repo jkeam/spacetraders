@@ -54,6 +54,9 @@ class Menu:
         self.default_quit_choice = Choice("quit", ChoiceType.ACTION)
         self.current_choice:Choice = self.default_quit_choice
         self.current_ship:Ship|None = None
+        self.headquarter_shipyard_waypoints:list[Waypoint] = []
+        self.current_headquarter_waypoint:Waypoint|None = None
+        self.current_headquarter_ship:Ship|None = None
 
     def init_from_file(self, filename:str):
         with open(filename, "r") as stream:
@@ -131,14 +134,45 @@ class Menu:
                             self.printer.print_waypoint(hq)
                         case "get_headquarter_waypoints":
                             self.printer.print_waypoints(self.hero.get_headquarter_waypoints())
+                        case "get_headquarter_shipyard_waypoint":
+                            waypoint_names:list[str] = list(map(lambda s: s.waypoint, self.headquarter_shipyard_waypoints))
+                            cancel_text:str = self.add_back(waypoint_names)
+                            waypoint:str = self.ask_with_choice("Choose a waypoint?", waypoint_names)
+                            if waypoint == cancel_text:
+                                self.back_current_choice()
+                                return True
+
+                            matching:Waypoint|None = next((s for s in self.headquarter_shipyard_waypoints if s.waypoint == waypoint), None)
+                            if matching is None:
+                                print("Unable to find matching waypoint.")
+                            else:
+                                self.current_headquarter_waypoint = matching
+                                print(matching)
+                        case "get_headquarter_ships":
+                            tmp = self.hero.get_headquarter_ships(self.current_headquarter_waypoint.waypoint)
+                            print(tmp)
+                            ships:list[Ship] = []
+                            ship_names:list[str] = list(map(lambda s: s.name, ships))
+                            cancel_text:str = self.add_back(ship_names)
+                            ship_name:str = self.ask_with_choice("Buy a ship?", ship_names)
+                            if ship_name == cancel_text:
+                                self.back_current_choice()
+                                return True
+                            matching:Ship|None = next((s for s in ships if s.name == ship_name), None)
+                            if matching is None:
+                                print("Unable to find matching ship.")
+                            else:
+                                print(matching)
+                            self.current_headquarter_ship = matching
+                        case "update_headquarter_ships":
+                            print('buy ship here')
                         case "buy_headquarter_drone":
                             resp = self.hero.buy_headquarter_mining_drone()
                             if self.debug:
                                 print(resp)
-                        case "get_ships":
-                            self.hero.get_my_ships()
-                            ships:list[Ship] = list(self.hero.ships_by_symbol.values())
-                            self.printer.print_ships(ships)
+                        case "get_headquarter_shipyard_waypoints":
+                            self.headquarter_shipyard_waypoints:list[Waypoint] = self.hero.get_headquarter_shipyard_waypoints()
+                            self.printer.print_waypoints(self.headquarter_shipyard_waypoints)
                         case "get_my_ships":
                             self.hero.get_my_ships()
                             ships:list[Ship] = list(self.hero.ships_by_symbol.values())

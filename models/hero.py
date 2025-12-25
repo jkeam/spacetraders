@@ -150,12 +150,28 @@ class Hero:
     def get_waypoints(self, system:str) -> list[Waypoint]:
         """ Get all the waypoints given a system """
         raw_waypoints = self.api.get_auth(f"systems/{system}/waypoints")["data"]
-        self.headquarter_waypoints = list(map(lambda w: Waypoint(w), raw_waypoints))
+        waypoints:list[Waypoint] = list(map(lambda w: Waypoint(w), raw_waypoints))
         if self.debug:
-            print("Get Waypoints")
-            for w in self.headquarter_waypoints:
+            print(f"Get Waypoints for System {system}")
+            for w in waypoints:
                 print(w)
-        return self.headquarter_waypoints
+        return waypoints
+
+    def get_shipyard_waypoints(self, system:str) -> list[Waypoint]:
+        """ Get all the shipyard waypoints given a system """
+        raw_waypoints = self.api.get_auth(f"systems/{system}/waypoints?traits=SHIPYARD")["data"]
+        waypoints:list[Waypoint] = list(map(lambda w: Waypoint(w), raw_waypoints))
+        if self.debug:
+            print(f"Get Shipyard Waypoints for System {system}")
+            for w in waypoints:
+                print(w)
+        return waypoints
+
+    def get_headquarter_shipyard_waypoints(self) -> list[Waypoint]:
+        """ Get all the shipyard waypoints in HQ """
+        if self.headquarter is None:
+            self.get_agent()
+        return self.get_shipyard_waypoints(self.headquarter.system)
 
     def get_headquarter(self) -> Waypoint:
         """ Get the waypoint that represents the headquarter """
@@ -180,30 +196,27 @@ class Hero:
             print(raw_waypoint)
         return Waypoint(raw_waypoint)
 
-    def get_headquarter_ships(self) -> dict:
+    def get_headquarter_ships(self, shipyard_waypoint_symbol:str="") -> dict:
         """ Get all the ships available to purchase from headquarter """
         if len(self.headquarter_waypoints) == 0:
             self.get_headquarter_waypoints()
 
-        shipyard:Waypoint|None = None
-        for w in self.headquarter_waypoints:
-            if shipyard is None:
-                for t in w.traits:
-                    if t.symbol == "SHIPYARD":
-                        shipyard = w
+        if shipyard_waypoint_symbol == "":
+            shipyard:Waypoint|None = None
+            for w in self.headquarter_waypoints:
+                if shipyard is None:
+                    for t in w.traits:
+                        if t.symbol == "SHIPYARD":
+                            shipyard = w
+                            shipyard_waypoint_symbol = w.waypoint
+        if shipyard_waypoint_symbol == "":
+            return {}
 
-        if shipyard is not None:
-            self.headquarter_shipyard = shipyard
-            if self.debug:
-                print("Found Shipyard")
-                print(shipyard)
-
-            raw_ships = self.api.get_auth(f"systems/{self.headquarter.system}/waypoints/{shipyard.waypoint}/shipyard")["data"]
-            if self.debug:
-                print("Get Headquarter Ships")
-                print(raw_ships)
-            return raw_ships
-        return {}
+        raw_ships = self.api.get_auth(f"systems/{self.headquarter.system}/waypoints/{shipyard_waypoint_symbol}/shipyard")["data"]
+        if self.debug:
+            print("Get Headquarter Ships")
+            print(raw_ships)
+        return raw_ships
 
     def get_headquarter_mining_drones(self) -> list[dict]:
         """ Get headquarter mining drones available to purchase """
