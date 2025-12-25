@@ -209,6 +209,10 @@ class Ship:
         flight_mode:str = ship_nav["flightMode"]
         return ShipNav(system, waypoint, ship_route, status, flight_mode)
 
+    def is_docked(self) -> bool:
+        """ Tells if ship is docked """
+        return self.nav.status == "DOCKED"
+
     def cargo_is_full(self) -> bool:
         """ Indicates if cargo is full """
         return self.cargo.is_full()

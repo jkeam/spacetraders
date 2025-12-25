@@ -11,19 +11,19 @@ from models.system import System
 class Hero:
     """ Class representing the player """
     def __init__(self):
-        self.callsign:str
-        self.faction:str
-        self.token:str
+        self.callsign:str = ""
+        self.faction:str = ""
+        self.token:str = ""
         self.debug:bool = False
-        self.contracts:list[Contract]
-        self.headquarter_waypoints:list[Waypoint]
-        self.headquarter:Location|None
-        self.headquarter_shipyard:Waypoint
-        self.account_id:str
-        self.credits:int
-        self.api:Spacetrader
-        self.ships_by_symbol:dict[str, Ship]
-        self.systems:list[System]
+        self.contracts:list[Contract] = []
+        self.headquarter_waypoints:list[Waypoint] = []
+        self.headquarter:Location|None = None
+        self.headquarter_shipyard:Waypoint|None = None
+        self.account_id:str = ""
+        self.credits:int = ""
+        self.api:Spacetrader|None = None
+        self.ships_by_symbol:dict[str, Ship] = {}
+        self.systems:list[System] = []
 
     def __str__(self) -> str:
         return f"Hero(callsign: {self.callsign}, faction: {self.faction})"
@@ -207,7 +207,9 @@ class Hero:
 
     def get_headquarter_mining_drones(self) -> list[dict]:
         """ Get headquarter mining drones available to purchase """
-        ships = list(filter(lambda s: s["type"] == "SHIP_MINING_DRONE", self.get_headquarter_ships()["ships"]))
+        print("headquarter ships")
+        print(self.get_headquarter_ships())
+        ships = list(filter(lambda s: s["type"] == "SHIP_MINING_DRONE", self.get_headquarter_ships().get("ships", [])))
         if self.debug:
             print("Get Headquarter mining drones")
             print(ships)
@@ -216,9 +218,19 @@ class Hero:
     def buy_headquarter_mining_drone(self) -> dict:
         """ Buy mining drone at the HQ """
         self.get_headquarter_mining_drones()
-        raw_purchase = self.api.post_auth(f"my/ships", {"shipType": "SHIP_MINING_DRONE", "waypointSymbol": self.headquarter_shipyard.waypoint})["data"]
+        raw_purchase = {}
+        if self.headquarter_shipyard is not None and self.headquarter_shipyard.waypoint is not None:
+            raw_purchase = self.api.post_auth(f"my/ships", {"shipType": "SHIP_MINING_DRONE", "waypointSymbol": self.headquarter_shipyard.waypoint})["data"]
         if self.debug:
             print("Buy Headquarter Mining Drone")
+            print(raw_purchase)
+        return raw_purchase
+
+    def buy_mining_drone(self, waypoint_symbol:str) -> dict:
+        """ Buy mining drone at the given waypoint symbol """
+        raw_purchase = self.api.post_auth(f"my/ships", {"shipType": "SHIP_MINING_DRONE", "waypointSymbol": waypoint_symbol})["data"]
+        if self.debug:
+            print("Buy Mining Drone")
             print(raw_purchase)
         return raw_purchase
 

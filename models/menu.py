@@ -48,10 +48,12 @@ class Menu:
     """ Menu Handler """
     def __init__(self, hero:Hero) -> None:
         self.hero = hero
+        self.debug = self.hero.debug
+        self.printer:Printer = Printer(self.hero.debug)
         self.choice_by_name:dict[str,Choice] = {}
         self.default_quit_choice = Choice("quit", ChoiceType.ACTION)
         self.current_choice:Choice = self.default_quit_choice
-        self.printer:Printer = Printer(self.hero.debug)
+        self.current_ship:Ship|None = None
 
     def init_from_file(self, filename:str):
         with open(filename, "r") as stream:
@@ -129,11 +131,18 @@ class Menu:
                             self.printer.print_waypoint(hq)
                         case "get_headquarter_waypoints":
                             self.printer.print_waypoints(self.hero.get_headquarter_waypoints())
+                        case "buy_headquarter_drone":
+                            resp = self.hero.buy_headquarter_mining_drone()
+                            if self.debug:
+                                print(resp)
                         case "get_ships":
                             self.hero.get_my_ships()
                             ships:list[Ship] = list(self.hero.ships_by_symbol.values())
                             self.printer.print_ships(ships)
-                            names:list[str] = [ship.name for ship in ships]
+                        case "get_my_ships":
+                            self.hero.get_my_ships()
+                            ships:list[Ship] = list(self.hero.ships_by_symbol.values())
+                            self.printer.print_ships(ships)
                         case "get_ship":
                             ships:list[Ship] = list(self.hero.ships_by_symbol.values())
                             names:list[str] = [ship.name for ship in ships]
@@ -144,15 +153,30 @@ class Menu:
                                 return True
 
                             ship:Ship = self.hero.ships_by_symbol[ship_name]
+                            self.current_ship = ship
                             self.printer.print_ship(ship)
                         case "update_ship":
-                            actions:list[str] = ["Move"]
+                            actions:list[str] = ["Info", "Move", "Orbit", "Dock"]
+                            # if not self.current_ship.is_docked():
+                                # actions.append()
                             cancel_text:str = self.add_back(actions)
-                            action:str = self.ask_with_choice("Actions?", actions)
-                            if action == cancel_text:
-                                self.back_current_choice()
-                                return True
-                            print(action)
+                            print(self.current_ship.is_docked())
+                            match self.ask_with_choice("Actions?", actions):
+                                case x if x == cancel_text:
+                                    self.back_current_choice()
+                                    return True
+                                case "Info":
+                                    self.printer.print_ship(self.current_ship)
+                                case "Move":
+                                    print("Move")
+                                case "Orbit":
+                                    resp = self.current_ship.orbit()
+                                    if self.debug:
+                                        print(resp)
+                                case "Dock":
+                                    resp = self.current_ship.dock()
+                                    if self.debug:
+                                        print(resp)
                         case "get_contracts":
                             contracts = self.hero.get_contracts()
                             contract_ids = list(map(lambda c: c.id, contracts))
