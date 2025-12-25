@@ -52,18 +52,21 @@ class Printer():
         status:list[str] = []
         flight_mode:list[str] = []
         fuel:list[str] = []
+        roles:list[str] = []
         for ship in ships:
             names.append(ship.name)
             systems.append(ship.nav.system)
             status.append(ship.nav.status)
             flight_mode.append(ship.nav.flight_mode)
-            fuel.append(f"{ship.fuel.current} / {ship.fuel.capacity}"),
+            fuel.append(f"{ship.fuel.current} / {ship.fuel.capacity}")
+            roles.append(ship.role)
         self.print_list({
             "Names": names,
             "Current System": systems,
             "Status": status,
             "Flight Mode": flight_mode,
             "Fuel": fuel,
+            "Role": roles,
         })
 
     def print_ship(self, ship:Ship) -> None:

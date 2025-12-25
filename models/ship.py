@@ -231,8 +231,12 @@ class Ship:
 
     def fly(self, destination_waypoint_symbol:str) -> ShipNav:
         """ Fly ship """
-        resp = self.api.post_auth(f"my/ships/{self.symbol}/navigate", {"waypointSymbol": destination_waypoint_symbol})["data"]
-        return self._create_nav(resp["nav"])
+        try:
+            resp = self.api.post_auth(f"my/ships/{self.symbol}/navigate", {"waypointSymbol": destination_waypoint_symbol})["data"]
+            return self._create_nav(resp["nav"])
+        except Exception as e:
+            # catching the common mistake of flying without orbiting first
+            print(e)
 
     def dock(self) -> ShipNav:
         """ Dock ship """
