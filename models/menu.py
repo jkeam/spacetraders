@@ -10,6 +10,7 @@ from models.waypoint import Waypoint
 from models.ship import Ship
 from models.contract import Contract
 from models.printer import Printer
+from models.shipyard import Shipyard
 
 @dataclass
 class Option:
@@ -56,7 +57,7 @@ class Menu:
         self.current_ship:Ship|None = None
         self.headquarter_shipyard_waypoints:list[Waypoint] = []
         self.current_headquarter_waypoint:Waypoint|None = None
-        self.current_headquarter_ship:Ship|None = None
+        self.current_ship_type:str = ""
 
     def init_from_file(self, filename:str):
         with open(filename, "r") as stream:
@@ -149,23 +150,17 @@ class Menu:
                                 self.current_headquarter_waypoint = matching
                                 print(matching)
                         case "get_headquarter_ships":
-                            tmp = self.hero.get_headquarter_ships(self.current_headquarter_waypoint.waypoint)
-                            print(tmp)
-                            ships:list[Ship] = []
-                            ship_names:list[str] = list(map(lambda s: s.name, ships))
-                            cancel_text:str = self.add_back(ship_names)
-                            ship_name:str = self.ask_with_choice("Buy a ship?", ship_names)
-                            if ship_name == cancel_text:
+                            shipyard:Shipyard = self.hero.get_shipyard(self.current_headquarter_waypoint.waypoint)
+                            ship_types:list[str] = shipyard.ship_types
+                            cancel_text:str = self.add_back(ship_types)
+                            ship_type:str = self.ask_with_choice("Buy a ship?", ship_types)
+                            if ship_type == cancel_text:
                                 self.back_current_choice()
                                 return True
-                            matching:Ship|None = next((s for s in ships if s.name == ship_name), None)
-                            if matching is None:
-                                print("Unable to find matching ship.")
-                            else:
-                                print(matching)
-                            self.current_headquarter_ship = matching
+                            self.current_ship_type = ship_type
                         case "update_headquarter_ships":
-                            print('buy ship here')
+                            # TODO: Implement me
+                            print(f'make call to buy {self.current_ship_type}')
                         case "buy_headquarter_drone":
                             resp = self.hero.buy_headquarter_mining_drone()
                             if self.debug:
@@ -191,8 +186,10 @@ class Menu:
                             self.printer.print_ship(ship)
                         case "update_ship":
                             actions:list[str] = ["Info", "Move", "Orbit", "Dock"]
-                            # if not self.current_ship.is_docked():
-                                # actions.append()
+                            # fail the app immediately if ship isn't set here
+                            #   as it should be
+                            if self.current_ship is None:
+                                return False
                             cancel_text:str = self.add_back(actions)
                             print(self.current_ship.is_docked())
                             match self.ask_with_choice("Actions?", actions):
@@ -222,11 +219,9 @@ class Menu:
                             contract_ids = list(map(lambda c: c.id, self.hero.get_contracts()))
                             cancel_text:str = self.add_back(contract_ids)
                             contract_id:str = self.ask_with_choice("Which contract do you want to view?", contract_ids)
-
                             if contract_id == cancel_text:
                                 self.back_current_choice()
                                 return True
-
                             contract:Contract|None = self.hero.get_contract_by_id(contract_id)
                             if contract is None:
                                 print("Contract not found")

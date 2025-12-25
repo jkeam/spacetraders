@@ -3,7 +3,7 @@ from json import dumps, loads
 
 class Spacetrader:
     """ Represents the spacetracer API """
-    def __init__(self, token:str, account_token: str, debug: bool) -> None:
+    def __init__(self, token:str, account_token:str, debug:bool=False) -> None:
         self.token = token
         self.account_token = account_token
         self.debug = debug
@@ -22,7 +22,7 @@ class Spacetrader:
 
     # Helper Methods
 
-    def _call_endpoint(self, method:str, authenticated:bool, path:str, data: dict) -> dict:
+    def _call_endpoint(self, method:str, authenticated:bool, path:str, data:dict) -> dict:
         """ Actually hits the API endpoint """
         host = "api.spacetraders.io"
         conn = http.client.HTTPSConnection(host)

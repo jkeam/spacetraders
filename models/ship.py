@@ -123,11 +123,18 @@ class ShipMount:
 
 class Ship:
     """ Ship """
-    def __init__(self, api:Spacetrader, ship:dict) -> None:
+    def __init__(self, api:Spacetrader, ship:dict[str, any]) -> None:
         self.api = api
-        self.name:str = ship["registration"]["name"]
-        self.faction:str = ship["registration"]["factionSymbol"]
-        self.role:str = ship["registration"]["role"]
+        self.name:str = ship.get("name", "")
+        self.faction:str = ship.get("factionSymbol", "")
+        self.role:str = ship.get("role", "")
+
+        registration:dict[str, str] = ship.get("registration", {})
+        if registration:
+            self.name:str = registration.get("name", "")
+            self.faction:str = registration.get("factionSymbol", "")
+            self.role:str = registration.get("role", "")
+
         self.symbol:str = ship["symbol"]
         self.nav = self._create_nav(ship["nav"])
         self.crew = ShipCrew(

@@ -1,7 +1,7 @@
 class Location:
     """ Represents a location """
     def __init__(self, coordinate:str) -> None:
-        data = coordinate.split("-")
+        data:list[str] = coordinate.split("-")
         self.sector:str = data[0]
         self.system:str = f"{data[0]}-{data[1]}"
         self.waypoint:str = coordinate

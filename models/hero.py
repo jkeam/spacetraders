@@ -7,6 +7,7 @@ from models.spacetrader import Spacetrader
 from models.contract import Contract
 from models.agent import Agent
 from models.system import System
+from models.shipyard import Shipyard
 
 class Hero:
     """ Class representing the player """
@@ -16,12 +17,13 @@ class Hero:
         self.token:str = ""
         self.debug:bool = False
         self.contracts:list[Contract] = []
+        self.agent:Agent|None = None
         self.headquarter_waypoints:list[Waypoint] = []
         self.headquarter:Location|None = None
         self.headquarter_shipyard:Waypoint|None = None
         self.account_id:str = ""
-        self.credits:int = ""
-        self.api:Spacetrader|None = None
+        self.credits:int = 0
+        self.api:Spacetrader = Spacetrader("", "")
         self.ships_by_symbol:dict[str, Ship] = {}
         self.systems:list[System] = []
 
@@ -75,33 +77,31 @@ class Hero:
             else:
                 print("Unable to get token")
 
-    def get_agent(self) -> Agent:
+    def get_agent(self, lazy_load:bool=False) -> Agent:
         """ Get agent info """
-        info = self.api.get_auth("my/agent")["data"]
-        agent:Agent = Agent(
-                info["accountId"],
-                info["symbol"],
-                Location(info["headquarters"]),
-                info["credits"],
-                info["startingFaction"],
-                info["shipCount"],
-        )
-        if self.debug:
-            print(agent)
-
-        self.headquarter = agent.headquarter
-        self.account_id = agent.account_id
-        self.credits = agent.credits
-        return agent
+        if (not lazy_load) or (lazy_load and self.agent is None):
+            info = self.api.get_auth("my/agent")["data"]
+            self.agent:Agent = Agent(
+                    info["accountId"],
+                    info["symbol"],
+                    Location(info["headquarters"]),
+                    info["credits"],
+                    info["startingFaction"],
+                    info["shipCount"],
+            )
+            if self.debug:
+                print(self.agent)
+        self.headquarter = self.agent.headquarter
+        self.account_id = self.agent.account_id
+        self.credits = self.agent.credits
+        return self.agent
 
     def get_my_ships(self) -> list[Ship]:
         """ Get my ships """
         info = self.api.get_auth("my/ships")["data"]
-
         ships = list(map(lambda s: Ship(self.api, s), info))
         ship_keys = list(map(lambda s: s.symbol, ships))
         self.ships_by_symbol = dict(zip(ship_keys, ships))
-
         if self.debug:
             print("Get my ships")
             print(info)
@@ -109,20 +109,20 @@ class Hero:
                 print(s)
         return ships
 
-    def get_contracts(self) -> list[Contract]:
+    def get_contracts(self, lazy_load:bool=False) -> list[Contract]:
         """ Get contracts """
-        info = self.api.get_auth("my/contracts")["data"]
-        self.contracts = list(map(lambda c: Contract(c), info))
-        if self.debug:
-            print("Get Contracts")
-            for c in self.contracts:
-                print(c)
+        if (not lazy_load) or (lazy_load and len(self.contracts) == 0):
+            info = self.api.get_auth("my/contracts")["data"]
+            self.contracts = list(map(lambda c: Contract(c), info))
+            if self.debug:
+                print("Get Contracts")
+                for c in self.contracts:
+                    print(c)
         return self.contracts
 
     def get_contract_by_id(self, id) -> Contract|None:
         """ Get contract by id """
-        if len(self.contracts) == 0:
-            self.get_contracts()
+        self.get_contracts(True)
         if len(self.contracts) == 0:
             return None
         return next((c for c in self.contracts if c.id == id), None)
@@ -143,8 +143,9 @@ class Hero:
 
     def get_headquarter_waypoints(self) -> list[Waypoint]:
         """ Get all the waypoints in the same system as the headquarter """
+        self.get_agent(True)
         if self.headquarter is None:
-            self.get_agent()
+            return []
         return self.get_waypoints(self.headquarter.system)
 
     def get_waypoints(self, system:str) -> list[Waypoint]:
@@ -169,14 +170,12 @@ class Hero:
 
     def get_headquarter_shipyard_waypoints(self) -> list[Waypoint]:
         """ Get all the shipyard waypoints in HQ """
-        if self.headquarter is None:
-            self.get_agent()
+        self.get_agent(True)
         return self.get_shipyard_waypoints(self.headquarter.system)
 
     def get_headquarter(self) -> Waypoint:
         """ Get the waypoint that represents the headquarter """
-        if self.headquarter is None:
-            self.get_agent()
+        self.get_agent(True)
         return self.get_waypoint(self.headquarter)
 
     def get_systems(self) -> list[System]:
@@ -196,44 +195,42 @@ class Hero:
             print(raw_waypoint)
         return Waypoint(raw_waypoint)
 
-    def get_headquarter_ships(self, shipyard_waypoint_symbol:str="") -> dict:
+    def get_shipyard(self, shipyard_waypoint_symbol:str="") -> Shipyard|None:
         """ Get all the ships available to purchase from headquarter """
+        if shipyard_waypoint_symbol == "":
+            return None
+
+        # lazy load waypoints
         if len(self.headquarter_waypoints) == 0:
             self.get_headquarter_waypoints()
 
         if shipyard_waypoint_symbol == "":
-            shipyard:Waypoint|None = None
-            for w in self.headquarter_waypoints:
-                if shipyard is None:
-                    for t in w.traits:
-                        if t.symbol == "SHIPYARD":
-                            shipyard = w
-                            shipyard_waypoint_symbol = w.waypoint
+            for waypoint in self.headquarter_waypoints:
+                if shipyard_waypoint_symbol != "":
+                    break
+                for trait in waypoint.traits:
+                    if trait.symbol == "SHIPYARD":
+                        shipyard_waypoint_symbol = waypoint.waypoint
+                        break
+
         if shipyard_waypoint_symbol == "":
-            return {}
+            return None
 
-        raw_ships = self.api.get_auth(f"systems/{self.headquarter.system}/waypoints/{shipyard_waypoint_symbol}/shipyard")["data"]
+        system:str = "-".join(shipyard_waypoint_symbol.split("-")[0:2])
+        raw = self.api.get_auth(f"systems/{system}/waypoints/{shipyard_waypoint_symbol}/shipyard")["data"]
         if self.debug:
-            print("Get Headquarter Ships")
-            print(raw_ships)
-        return raw_ships
-
-    def get_headquarter_mining_drones(self) -> list[dict]:
-        """ Get headquarter mining drones available to purchase """
-        print("headquarter ships")
-        print(self.get_headquarter_ships())
-        ships = list(filter(lambda s: s["type"] == "SHIP_MINING_DRONE", self.get_headquarter_ships().get("ships", [])))
-        if self.debug:
-            print("Get Headquarter mining drones")
-            print(ships)
-        return ships
+            print("Get Shipyard")
+            print(raw)
+        return Shipyard(raw)
 
     def buy_headquarter_mining_drone(self) -> dict:
         """ Buy mining drone at the HQ """
-        self.get_headquarter_mining_drones()
         raw_purchase = {}
         if self.headquarter_shipyard is not None and self.headquarter_shipyard.waypoint is not None:
-            raw_purchase = self.api.post_auth(f"my/ships", {"shipType": "SHIP_MINING_DRONE", "waypointSymbol": self.headquarter_shipyard.waypoint})["data"]
+            raw_purchase = self.api.post_auth(f"my/ships", {
+                "shipType": "SHIP_MINING_DRONE",
+                "waypointSymbol": self.headquarter_shipyard.waypoint
+            })["data"]
         if self.debug:
             print("Buy Headquarter Mining Drone")
             print(raw_purchase)
@@ -299,7 +296,7 @@ class Hero:
 
     def view_market(self, ship_name:str) -> dict:
         """ View market """
-        """ FIXME, turn dict into object """
+        # FIXME: turn dict into object
         matching = self._find_ship_by_name(ship_name)
         if matching is not None:
             if self.debug:
