@@ -28,8 +28,6 @@ choices:
         next: get_headquarter_waypoints
       - text: Headquarter Shipyard Waypoints
         next: get_headquarter_shipyard_waypoints
-      - text: Buy Headquarter Drone
-        next: buy_headquarter_drone
   - name: get_headquarter_shipyard_waypoint
     type: action
     route: get_headquarter_shipyard_waypoint
@@ -63,10 +61,6 @@ choices:
   - name: get_headquarter_waypoints
     type: action
     route: get_headquarter_waypoints
-    next: headquarter
-  - name: buy_headquarter_drone
-    type: action
-    route: buy_headquarter_drone
     next: headquarter
   - name: get_my_ships
     type: action

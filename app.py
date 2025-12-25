@@ -30,7 +30,7 @@ def main() -> None:
 
     # do things
     # hero.accept_all_contracts()
-    # hero.buy_headquarter_mining_drone()
+    # hero.buy_ship(ship_type, nav_symbol)
     # ship_name:str = "SPARKSTER-2"
     # asteroid_field:str = "X1-YU85-76885D"
     # orbital_station:str = "X1-YU85-34607X"

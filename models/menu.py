@@ -164,10 +164,6 @@ class Menu:
                             resp = self.hero.buy_ship(self.current_ship_type, self.current_headquarter_waypoint.waypoint)
                             if self.debug:
                                 print(resp)
-                        case "buy_headquarter_drone":
-                            resp = self.hero.buy_headquarter_mining_drone()
-                            if self.debug:
-                                print(resp)
                         case "get_headquarter_shipyard_waypoints":
                             self.headquarter_shipyard_waypoints:list[Waypoint] = self.hero.get_headquarter_shipyard_waypoints()
                             self.printer.print_waypoints(self.headquarter_shipyard_waypoints)
