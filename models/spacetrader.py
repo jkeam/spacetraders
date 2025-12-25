@@ -33,6 +33,9 @@ class Spacetrader:
                 headers["Authorization"] = f"Bearer {self.token}"
             else:
                 headers["Authorization"] = f"Bearer {self.account_token}"
+        if data:
+            headers["Content-Type"] = "application/json"
+            headers["Accept"] = "application/json"
 
         if data is not None and len(data) > 0:
             conn.request(method, f"/v2/{path}", dumps(data), headers=headers)

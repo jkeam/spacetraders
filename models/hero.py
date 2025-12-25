@@ -236,11 +236,20 @@ class Hero:
             print(raw_purchase)
         return raw_purchase
 
-    def buy_mining_drone(self, waypoint_symbol:str) -> dict:
-        """ Buy mining drone at the given waypoint symbol """
-        raw_purchase = self.api.post_auth(f"my/ships", {"shipType": "SHIP_MINING_DRONE", "waypointSymbol": waypoint_symbol})["data"]
+    def buy_ship(self, ship_type:str="SHIP_MINING_DRONE", symbol:str="") -> dict:
+        """ Buy ship type at given symbol """
+        raw_purchase = {}
+
+        if symbol == "" and self.headquarter_shipyard is not None and self.headquarter_shipyard.waypoint is not None:
+            # set to headquarter if not set
+            symbol = self.headquarter_shipyard.waypoint
+
+        raw_purchase = self.api.post_auth(f"my/ships", {
+            "shipType": ship_type,
+            "waypointSymbol": symbol,
+        })["data"]
         if self.debug:
-            print("Buy Mining Drone")
+            print(f"Buy Ship, type:{ship_type}, symbol: {symbol}")
             print(raw_purchase)
         return raw_purchase
 

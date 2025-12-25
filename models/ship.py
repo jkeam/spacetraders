@@ -224,17 +224,20 @@ class Ship:
         """ Indicates if cargo is full """
         return self.cargo.is_full()
 
-    def orbit(self) -> dict:
+    def orbit(self) -> ShipNav:
         """ Bring ship into orbit """
-        return self.api.post_auth(f"my/ships/{self.symbol}/orbit")["data"]
+        resp = self.api.post_auth(f"my/ships/{self.symbol}/orbit")["data"]
+        return self._create_nav(resp["nav"])
 
-    def fly(self, destination_waypoint_symbol:str) -> dict:
+    def fly(self, destination_waypoint_symbol:str) -> ShipNav:
         """ Fly ship """
-        return self.api.post_auth(f"my/ships/{self.symbol}/navigate", {"waypointSymbol": destination_waypoint_symbol})["data"]
+        resp = self.api.post_auth(f"my/ships/{self.symbol}/navigate", {"waypointSymbol": destination_waypoint_symbol})["data"]
+        return self._create_nav(resp["nav"])
 
-    def dock(self) -> dict:
+    def dock(self) -> ShipNav:
         """ Dock ship """
-        return self.api.post_auth(f"my/ships/{self.symbol}/dock")
+        resp = self.api.post_auth(f"my/ships/{self.symbol}/dock")["data"]
+        return self._create_nav(resp["nav"])
 
     def refuel(self) -> dict:
         """ Refuel ship """

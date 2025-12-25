@@ -2,12 +2,11 @@ import yaml
 from collections import deque
 from dataclasses import dataclass
 from enum import Enum
-from inquirer import prompt, List as IList
+from inquirer import prompt, List as IList, Text as IText
 from models.hero import Hero
-from models.agent import Agent
 from models.system import System
 from models.waypoint import Waypoint
-from models.ship import Ship
+from models.ship import Ship, ShipNav
 from models.contract import Contract
 from models.printer import Printer
 from models.shipyard import Shipyard
@@ -77,6 +76,9 @@ class Menu:
             except yaml.YAMLError as exc:
                 print(exc)
                 print(f"Unable to read from file named {filename}")
+
+    def ask(self, question:str) -> str:
+        return prompt([IText("answer", message=question)])["answer"]
 
     def ask_with_choice(self, question:str, choices:list[str], variable_name:str="answer") -> str:
         """ Ask user for a choice """
@@ -159,8 +161,9 @@ class Menu:
                                 return True
                             self.current_ship_type = ship_type
                         case "update_headquarter_ships":
-                            # TODO: Implement me
-                            print(f'make call to buy {self.current_ship_type}')
+                            resp = self.hero.buy_ship(self.current_ship_type, self.current_headquarter_waypoint.waypoint)
+                            if self.debug:
+                                print(resp)
                         case "buy_headquarter_drone":
                             resp = self.hero.buy_headquarter_mining_drone()
                             if self.debug:
@@ -199,15 +202,18 @@ class Menu:
                                 case "Info":
                                     self.printer.print_ship(self.current_ship)
                                 case "Move":
-                                    print("Move")
+                                    answer:str = self.ask("Where to (waypoint symbol)?")
+                                    nav:ShipNav = self.current_ship.fly(answer.upper())
+                                    if self.debug:
+                                        print(nav)
                                 case "Orbit":
                                     resp = self.current_ship.orbit()
                                     if self.debug:
                                         print(resp)
                                 case "Dock":
-                                    resp = self.current_ship.dock()
+                                    nav:ShipNav = self.current_ship.dock()
                                     if self.debug:
-                                        print(resp)
+                                        print(nav)
                         case "get_contracts":
                             contracts = self.hero.get_contracts()
                             contract_ids = list(map(lambda c: c.id, contracts))
