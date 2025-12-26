@@ -1,6 +1,6 @@
 from tabulate import tabulate
 from models.waypoint import Waypoint
-from models.ship import Ship, ShipExtraction, ShipCooldown, ShipCargo
+from models.ship import Ship, ShipExtraction, ShipCooldown, ShipCargo, ShipMount
 from models.contract import Contract
 from models.agent import Agent
 from models.system import System
@@ -77,7 +77,6 @@ class Printer():
                 "Faction",
                 "Role",
                 "Crew",
-                "Cargo",
                 "Fuel",
                 "Frame",
                 "Current System",
@@ -85,8 +84,6 @@ class Printer():
                 "Flight Mode",
                 "Departure",
                 "Arrival",
-                "Modules",
-                "Mounts",
             ],
             "Value": [
                 ship.name,
@@ -94,7 +91,6 @@ class Printer():
                 ship.faction,
                 ship.role,
                 f"{ship.crew.current} / {ship.crew.capacity}, required={ship.crew.required}, rotation={ship.crew.rotation}, morale={ship.crew.morale}, wages={ship.crew.wages}",
-                f"{ship.cargo.units} / {ship.cargo.capacity}, inventory=[{', '.join(list(map(lambda i: str(i), ship.cargo.inventory)))}]",
                 f"{ship.fuel.current} / {ship.fuel.capacity}",
                 f"{ship.frame.name} ({ship.frame.symbol}): condition={ship.frame.condition}, power_req={ship.frame.power_requirement}, crew_req={ship.frame.crew_requirement}, module_slots={ship.frame.module_slots}, mounting_points={ship.frame.mounting_points}",
                 ship.nav.system,
@@ -102,10 +98,11 @@ class Printer():
                 ship.nav.flight_mode,
                 f"{ship.nav.route.departure.type} at {ship.nav.route.departure.symbol} ({ship.nav.route.departure.x}, {ship.nav.route.departure.y}) at {ship.nav.route.departure_at}",
                 f"{ship.nav.route.destination.type} at {ship.nav.route.destination.symbol} ({ship.nav.route.destination.x}, {ship.nav.route.destination.y}) at {ship.nav.route.arrival_at}",
-                "\n\n".join(list(map(lambda m: f"{m.name} ({m.symbol}): capacity={m.capacity}, power_req={m.power_requirement}, crew_req={m.crew_requirement}, slot_req={m.slot_requirement},\n{m.description}", ship.modules))),
-                "\n\n".join(list(map(lambda m: f"{m.name} ({m.symbol}): power_req={m.power_requirement}, crew_req={m.crew_requirement}, strength={m.strength},\n{m.description}", ship.mounts))),
             ],
         })
+        self.print_cargo(ship.cargo)
+        self.print_modules(ship.modules)
+        self.print_mounts(ship.mounts)
 
     def print_contract(self, contract:Contract) -> None:
         if self.debug:
@@ -192,8 +189,60 @@ class Printer():
     def print_waypoint(self, hq:Waypoint) -> None:
         self.print_waypoints([hq])
 
-    def print_extraction_results(self, extraction:ShipExtraction, cooldown:ShipCooldown, cargo:ShipCargo) -> None:
-        """ Print extraction results """
+    def print_modules(self, modules:list[ShipModule]) -> None:
+        names:list[str] = []
+        symbols:list[str] = []
+        capacity:list[str] = []
+        power:list[str] = []
+        crew:list[str] = []
+        slot:list[str] = []
+        description:list[str] = []
+        for m in modules:
+            names.append(m.name)
+            symbols.append(m.symbol)
+            capacity.append(m.capacity)
+            power.append(m.power_requirement)
+            crew.append(m.crew_requirement)
+            slot.append(m.slot_requirement)
+            description.append(m.description)
+        self.print_list({
+            "Names": names,
+            "Symbols": symbols,
+            "Capacity": capacity,
+            "Power Req": power,
+            "Crew Req": crew,
+            "Slot Req": slot,
+        })
+        print("Descriptions")
+        for index, desc in enumerate(description):
+            print(f"{names[index]}: {desc}")
+
+    def print_mounts(self, modules:list[ShipMount]) -> None:
+        names:list[str] = []
+        symbols:list[str] = []
+        power:list[str] = []
+        crew:list[str] = []
+        strength:list[str] = []
+        description:list[str] = []
+        for m in modules:
+            names.append(m.name)
+            symbols.append(m.symbol)
+            power.append(m.power_requirement)
+            crew.append(m.crew_requirement)
+            strength.append(m.strength)
+            description.append(m.description)
+        self.print_list({
+            "Names": names,
+            "Symbols": symbols,
+            "Power Req": power,
+            "Crew Req": crew,
+            "Strength": strength,
+        })
+        print("Descriptions")
+        for index, desc in enumerate(description):
+            print(f"{names[index]}: {desc}")
+
+    def print_cargo(self, cargo:ShipCargo) -> None:
         names:list[str] = []
         symbols:list[str] = []
         units:list[str] = []
@@ -206,6 +255,10 @@ class Printer():
             "Symbols": symbols,
             "Units": units,
         })
+
+    def print_extraction_results(self, extraction:ShipExtraction, cooldown:ShipCooldown, cargo:ShipCargo) -> None:
+        """ Print extraction results """
+        self.print_cargo(cargo)
         self.print_list({
             "Field": [
                 "Ship",
@@ -218,9 +271,9 @@ class Printer():
             ], "Values": [
                 extraction.ship_symbol,
                 extraction.yield_symbol,
-                extraction.yield_units,
-                cooldown.total_seconds,
-                cooldown.expiration,
-                cargo.capacity,
-                cargo.units,
+                str(extraction.yield_units),
+                str(cooldown.total_seconds),
+                str(cooldown.expiration),
+                str(cargo.capacity),
+                str(cargo.units),
             ]})
