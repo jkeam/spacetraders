@@ -4,6 +4,42 @@ from models.location import Location
 from models.spacetrader import Spacetrader
 
 @dataclass
+class TradeGood:
+    symbol:str
+    trade_type:str
+    volume:int
+    supply:str
+    purchase_price:int
+    sell_price:int
+
+@dataclass
+class Market:
+    symbol:str
+    exports:list[Export]
+    imports:list[Import]
+    exchanges:list[Exchange]
+    transactions:list[Transaction]
+    trade_goods:list[TradeGood]
+
+@dataclass
+class Export:
+    symbol:str
+    name:str
+    description:str
+
+@dataclass
+class Import:
+    symbol:str
+    name:str
+    description:str
+
+@dataclass
+class Exchange:
+    symbol:str
+    name:str
+    description:str
+
+@dataclass
 class ShipExtraction:
     """ Result of a ship extracting/mining """
     ship_symbol:str
@@ -334,17 +370,83 @@ class Ship:
                 list(map(lambda i: ShipCargoItem(i["symbol"], i["name"], i["description"], i["units"]), ship["cargo"]["inventory"])))
         return self.cargo
 
-    def get_cargo(self) -> dict:
+    def get_cargo(self) -> ShipCargo:
         """ Get Cargo """
-        return self.api.get_auth(f"my/ships/{self.symbol}/cargo")
+        cargo = self.api.get_auth(f"my/ships/{self.symbol}/cargo")["data"]
+        self.cargo = ShipCargo(
+                cargo["capacity"],
+                cargo["units"],
+                list(map(lambda i: ShipCargoItem(i["symbol"], i["name"], i["description"], i["units"]), cargo["inventory"])))
+        return self.cargo
 
-    def view_market(self) -> dict:
+    def view_market(self) -> Market:
         """ View Market, only works if we are at an asteroid field """
-        return self.api.get_auth(f"systems/{self.nav.system}/waypoints/{self.nav.waypoint.waypoint}/market")
+        raw = self.api.get_auth(f"systems/{self.nav.system}/waypoints/{self.nav.waypoint.waypoint}/market")["data"]
+
+        exports:list[Export] = list(map(lambda x: Export(x["symbol"], x["name"], x["description"]), raw["exports"]))
+        imports:list[Import] = list(map(lambda x: Import(x["symbol"], x["name"], x["description"]), raw["imports"]))
+        exchanges:list[Exchange] = list(map(lambda x: Exchange(x["symbol"], x["name"], x["description"]), raw["exchange"]))
+        transactions:list[Transaction] = []
+        trade_goods:list[TradeGood] = []
+
+        for raw_transaction in raw["transactions"]:
+            transactions.append(Transaction(
+                raw_transaction["waypointSymbol"],
+                raw_transaction["shipSymbol"],
+                raw_transaction["tradeSymbol"],
+                raw_transaction["type"],
+                raw_transaction["units"],
+                raw_transaction["pricePerUnit"],
+                raw_transaction["totalPrice"],
+                raw_transaction["timestamp"],
+            ))
+
+        for raw_good in raw["tradeGoods"]:
+            trade_goods.append(TradeGood(
+                raw_good["symbol"],
+                raw_good["type"],
+                raw_good["tradeVolume"],
+                raw_good["supply"],
+                raw_good["purchasePrice"],
+                raw_good["sellPrice"],
+            ))
+
+        return Market(
+            raw["symbol"],
+            exports,
+            imports,
+            exchanges,
+            transactions,
+            trade_goods
+        )
 
     def sell_all_cargo(self, except_symbols:list[str]) -> None:
         """ Sell all cargo """
         for c in self.cargo.inventory:
             if c.symbol not in except_symbols:
                 self.api.post_auth(f"my/ships/{self.symbol}/sell", {"symbol": c.symbol, "units": c.units})
+
+    def sell_cargo(self, cargo_symbol:str, units:int) -> dict:
+        resp = self.api.post_auth(f"my/ships/{self.symbol}/sell", {"symbol": cargo_symbol, "units": units})
+        cargo:ShipCargo = ShipCargo(
+                resp["cargo"]["capacity"],
+                resp["cargo"]["units"],
+                list(map(lambda i: ShipCargoItem(i["symbol"], i["name"], i["description"], i["units"]), resp["cargo"]["inventory"])))
+        raw_transaction = resp["transaction"]
+        transaction:Transaction = Transaction(
+            raw_transaction["waypointSymbol"],
+            raw_transaction["shipSymbol"],
+            raw_transaction["tradeSymbol"],
+            raw_transaction["type"],
+            raw_transaction["units"],
+            raw_transaction["pricePerUnit"],
+            raw_transaction["totalPrice"],
+            raw_transaction["timestamp"],
+        )
+        return {
+            "cargo": cargo,
+            "transaction": transaction,
+            "agent": resp["agent"]
+
+        }
 

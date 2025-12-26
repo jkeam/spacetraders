@@ -6,7 +6,7 @@ from inquirer import prompt, List as IList, Text as IText
 from models.hero import Hero
 from models.system import System
 from models.waypoint import Waypoint
-from models.ship import Ship, ShipNav
+from models.ship import Ship, ShipNav, Market
 from models.contract import Contract
 from models.printer import Printer
 from models.shipyard import Shipyard
@@ -187,7 +187,7 @@ class Menu:
                             ship:Ship = self.hero.ships_by_symbol[ship_name]
                             self.current_ship = ship
                         case "update_ship":
-                            actions:list[str] = ["Info", "Cargo", "Move", "Orbit", "Dock", "Refuel", "Extract"]
+                            actions:list[str] = ["Info", "Cargo", "Move", "Marketplace", "Sell", "Orbit", "Dock", "Refuel", "Extract"]
                             # fail the app immediately if ship isn't set here
                             #   as it should be
                             if self.current_ship is None:
@@ -216,6 +216,20 @@ class Menu:
                                     nav:ShipNav = self.current_ship.fly(answer.upper())
                                     if self.debug:
                                         print(nav)
+                                case "Marketplace":
+                                    market:Market = self.current_ship.view_market()
+                                    self.printer.print_market(market)
+                                case "Sell":
+                                    try:
+                                        cargo_symbol:str = self.ask("Cargo Symbol")
+                                        units:str = self.ask("Number of Units")
+                                        if self.debug:
+                                            print(f"{cargo_symbol} {units}")
+                                        resp = self.current_ship.sell_cargo(cargo_symbol, int(units))
+                                        if self.debug:
+                                            print(resp)
+                                    except Exception as e:
+                                        print(e)
                                 case "Orbit":
                                     resp = self.current_ship.orbit()
                                     if self.debug:
