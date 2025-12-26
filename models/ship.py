@@ -450,3 +450,21 @@ class Ship:
 
         }
 
+    def scrap(self) -> dict:
+        """ Scrap the ship """
+        resp = self.api.post_auth(f"my/ships/{self.symbol}/scrap")["data"]
+        raw_transaction = resp["transaction"]
+        transaction:Transaction = Transaction(
+            raw_transaction["waypointSymbol"],
+            raw_transaction["shipSymbol"],
+            "",
+            "",
+            1,
+            raw_transaction["totalPrice"],
+            raw_transaction["totalPrice"],
+            raw_transaction["timestamp"],
+        )
+        return {
+            "agent": resp["agent"],
+            "transaction": transaction
+        }

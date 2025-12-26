@@ -362,14 +362,16 @@ class Printer():
 
     def print_nav(self, nav:ShipNav) -> None:
         systems:list[str] = [nav.system]
-        waypoints:list[str] = [str(nav.waypoint)]
-        routes:list[str] = [str(nav.route)]
+        waypoints:list[str] = [nav.waypoint.waypoint]
+        routes:list[str] = [f"{str(nav.route.departure.symbol)} to {str(nav.route.destination.symbol)}"]
+        arrival_at:list[str] = [str(nav.route.arrival_at)]
         statuses:list[str] = [nav.status]
         flight_modes:list[str] = [nav.flight_mode]
         self.print_list({
             "System": systems,
             "Waypoint": waypoints,
             "Route": routes,
+            "Arrival": arrival_at,
             "Status": statuses,
             "Flight Mode": flight_modes
         })

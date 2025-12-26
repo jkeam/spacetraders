@@ -150,7 +150,7 @@ class Hero:
 
     def get_waypoints(self, system:str) -> list[Waypoint]:
         """ Get all the waypoints given a system """
-        raw_waypoints = self.api.get_auth(f"systems/{system}/waypoints")["data"]
+        raw_waypoints = self.api.get_auth(f"systems/{system}/waypoints?limit=20")["data"]
         waypoints:list[Waypoint] = list(map(lambda w: Waypoint(w), raw_waypoints))
         if self.debug:
             print(f"Get Waypoints for System {system}")
@@ -160,7 +160,7 @@ class Hero:
 
     def get_shipyard_waypoints(self, system:str) -> list[Waypoint]:
         """ Get all the shipyard waypoints given a system """
-        raw_waypoints = self.api.get_auth(f"systems/{system}/waypoints?traits=SHIPYARD")["data"]
+        raw_waypoints = self.api.get_auth(f"systems/{system}/waypoints?traits=SHIPYARD&limit=20")["data"]
         waypoints:list[Waypoint] = list(map(lambda w: Waypoint(w), raw_waypoints))
         if self.debug:
             print(f"Get Shipyard Waypoints for System {system}")

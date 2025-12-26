@@ -188,7 +188,7 @@ class Menu:
                             ship:Ship = self.hero.ships_by_symbol[ship_name]
                             self.current_ship = ship
                         case "update_ship":
-                            actions:list[str] = ["Info", "Cargo", "Map", "Move", "Marketplace", "Sell", "Orbit", "Dock", "Refuel", "Extract"]
+                            actions:list[str] = ["Info", "Cargo", "Map", "Move", "Marketplace", "Sell", "Orbit", "Dock", "Refuel", "Scrap", "Extract"]
                             # fail the app immediately if ship isn't set here
                             #   as it should be
                             if self.current_ship is None:
@@ -220,15 +220,23 @@ class Menu:
                                     # show what's in reach
                                     ship:Ship = self.current_ship
                                     waypoints:list[Waypoint] = self.hero.get_waypoints(ship.nav.system)
+                                    shipyard_waypoints:list[Waypoint] = self.hero.get_shipyard_waypoints(ship.nav.system)
                                     distances:list[float] = []
+                                    shipyard_distances:list[float] = []
                                     ship_x:int = ship.nav.route.destination.x
                                     ship_y:int = ship.nav.route.destination.y
                                     for w in waypoints:
                                         distances.append(dist(
                                             [w.x, w.y],
                                             [ship_x, ship_y]))
-                                    print(f"Assuming at arrival location at {ship.nav.waypoint.waypoint} at {ship_x}, {ship_y}")
+                                    for w in shipyard_waypoints:
+                                        shipyard_distances.append(dist(
+                                            [w.x, w.y],
+                                            [ship_x, ship_y]))
+                                    print(f"Assuming at arrival location at {ship.nav.waypoint.waypoint} at ({ship_x}, {ship_y})")
+                                    print(f"Ship has {ship.fuel.current} / {ship.fuel.capacity} units of fuel")
                                     self.printer.print_waypoints(waypoints, distances)
+                                    self.printer.print_waypoints(shipyard_waypoints, shipyard_distances)
                                 case "Move":
                                     try:
                                         answer:str = self.ask("Where to (waypoint symbol)? Type 'cancel' to cancel")
@@ -263,6 +271,13 @@ class Menu:
                                     resp = self.current_ship.refuel()
                                     if self.debug:
                                         print(resp)
+                                case "Scrap":
+                                    try:
+                                        is_scrap:bool = self.ask(f"Scrap {self.current_ship.name} (y/N)?") == "y"
+                                        if is_scrap:
+                                                self.current_ship.scrap()
+                                    except Exception as e:
+                                        print(e)
                                 case "Extract":
                                     resp = self.current_ship.mine()
                                     if self.debug:
