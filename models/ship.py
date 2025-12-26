@@ -325,9 +325,14 @@ class Ship:
         except Exception as e:
             print(e)
 
-    def dump_cargo(self, cargo_symbol:str, units:int) -> dict:
+    def dump_cargo(self, cargo_symbol:str, units:int) -> ShipCargo:
         """ Jettison cargo to make room """
-        return self.api.post_auth(f"my/ships/{self.symbol}/jettison", {"symbol": cargo_symbol, "units": units})
+        ship = self.api.post_auth(f"my/ships/{self.symbol}/jettison", {"symbol": cargo_symbol, "units": units})["data"]
+        self.cargo = ShipCargo(
+                ship["cargo"]["capacity"],
+                ship["cargo"]["units"],
+                list(map(lambda i: ShipCargoItem(i["symbol"], i["name"], i["description"], i["units"]), ship["cargo"]["inventory"])))
+        return self.cargo
 
     def get_cargo(self) -> dict:
         """ Get Cargo """
