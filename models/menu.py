@@ -1,5 +1,5 @@
 import yaml
-from collections import deque
+from math import dist
 from dataclasses import dataclass
 from enum import Enum
 from inquirer import prompt, List as IList, Text as IText
@@ -188,7 +188,7 @@ class Menu:
                             ship:Ship = self.hero.ships_by_symbol[ship_name]
                             self.current_ship = ship
                         case "update_ship":
-                            actions:list[str] = ["Info", "Cargo", "Move", "Marketplace", "Sell", "Orbit", "Dock", "Refuel", "Extract"]
+                            actions:list[str] = ["Info", "Cargo", "Map", "Move", "Marketplace", "Sell", "Orbit", "Dock", "Refuel", "Extract"]
                             # fail the app immediately if ship isn't set here
                             #   as it should be
                             if self.current_ship is None:
@@ -212,11 +212,31 @@ class Menu:
                                             resp = self.current_ship.dump_cargo(cargo_symbol, int(units))
                                             if self.debug:
                                                 print(resp)
+                                case "Map":
+                                    # map where we are
+                                    # get waypoints
+                                    # loop through them and show the distances
+                                    # figure out how far 1 unit of fuel takes us
+                                    # show what's in reach
+                                    ship:Ship = self.current_ship
+                                    waypoints:list[Waypoint] = self.hero.get_waypoints(ship.nav.system)
+                                    distances:list[float] = []
+                                    ship_x:int = ship.nav.route.destination.x
+                                    ship_y:int = ship.nav.route.destination.y
+                                    for w in waypoints:
+                                        distances.append(dist(
+                                            [w.x, w.y],
+                                            [ship_x, ship_y]))
+                                    print(f"Assuming at arrival location at {ship.nav.waypoint.waypoint} at {ship_x}, {ship_y}")
+                                    self.printer.print_waypoints(waypoints, distances)
                                 case "Move":
-                                    answer:str = self.ask("Where to (waypoint symbol)?")
-                                    nav:ShipNav = self.current_ship.fly(answer.upper())
-                                    if self.debug:
-                                        print(nav)
+                                    try:
+                                        answer:str = self.ask("Where to (waypoint symbol)? Type 'cancel' to cancel")
+                                        if answer.strip() != "cancel":
+                                            nav:ShipNav = self.current_ship.fly(answer.upper())
+                                            self.printer.print_nav(nav)
+                                    except Exception as e:
+                                        print(e)
                                 case "Marketplace":
                                     market:Market = self.current_ship.view_market()
                                     self.printer.print_market(market)

@@ -1,6 +1,6 @@
 from tabulate import tabulate
 from models.waypoint import Waypoint
-from models.ship import Ship, ShipExtraction, ShipCooldown, ShipCargo, ShipMount, ShipModule, Market
+from models.ship import Ship, ShipExtraction, ShipCooldown, ShipCargo, ShipMount, ShipModule, Market, ShipNav
 from models.contract import Contract
 from models.agent import Agent
 from models.system import System
@@ -20,29 +20,28 @@ class Printer():
         """ Print list """
         print(tabulate(table, "keys", tablefmt="simple_grid"))
 
-    def print_waypoints(self, waypoints:list[Waypoint]) -> None:
+    def print_waypoints(self, waypoints:list[Waypoint], distances:list[float]=[]) -> None:
         """ Format and print waypoints """
         ways:list[str] = []
         types:list[str] = []
-        xs:list[str] = []
-        ys:list[str] = []
+        xys:list[str] = []
         orbitals:list[str] = []
         traits:list[str] = []
         for waypoint in waypoints:
             ways.append(str(waypoint.waypoint))
             types.append(waypoint.type)
-            xs.append(str(waypoint.x))
-            ys.append(str(waypoint.y))
+            xys.append(f"{str(waypoint.x)}, {str(waypoint.y)}")
             orbitals.append("\n".join(list(map(lambda w: w.waypoint, waypoint.orbitals))))
             traits.append("\n".join(list(map(lambda w: w.symbol, waypoint.traits))))
         pretty_waypoints:dict[str,list[str]] = {
             "Waypoint": ways,
             "Type": types,
-            "X": xs,
-            "Y": ys,
+            "X, Y": xys,
             "Orbital": orbitals,
             "Traits": traits
         }
+        if len(distances) > 0:
+            pretty_waypoints["Distance"] = list(map(lambda x: str(x), distances))
         self.print_list(pretty_waypoints)
 
     def print_ships(self, ships:list[Ship]) -> None:
@@ -360,3 +359,17 @@ class Printer():
                 "Total Price": total_prices,
                 "Bought At": bought_ats,
             })
+
+    def print_nav(self, nav:ShipNav) -> None:
+        systems:list[str] = [nav.system]
+        waypoints:list[str] = [str(nav.waypoint)]
+        routes:list[str] = [str(nav.route)]
+        statuses:list[str] = [nav.status]
+        flight_modes:list[str] = [nav.flight_mode]
+        self.print_list({
+            "System": systems,
+            "Waypoint": waypoints,
+            "Route": routes,
+            "Status": statuses,
+            "Flight Mode": flight_modes
+        })
