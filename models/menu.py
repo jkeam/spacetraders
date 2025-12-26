@@ -187,7 +187,7 @@ class Menu:
                             ship:Ship = self.hero.ships_by_symbol[ship_name]
                             self.current_ship = ship
                         case "update_ship":
-                            actions:list[str] = ["Info", "Move", "Orbit", "Dock", "Refuel", "Extract"]
+                            actions:list[str] = ["Info", "Cargo", "Move", "Orbit", "Dock", "Refuel", "Extract", "Dump Cargo"]
                             # fail the app immediately if ship isn't set here
                             #   as it should be
                             if self.current_ship is None:
@@ -200,6 +200,8 @@ class Menu:
                                     return True
                                 case "Info":
                                     self.printer.print_ship(self.current_ship)
+                                case "Cargo":
+                                    self.printer.print_cargo(self.current_ship.cargo)
                                 case "Move":
                                     answer:str = self.ask("Where to (waypoint symbol)?")
                                     nav:ShipNav = self.current_ship.fly(answer.upper())
@@ -228,6 +230,14 @@ class Menu:
                                                 resp["extraction"],
                                                 resp["cooldown"],
                                                 resp["cargo"])
+                                case "Dump Cargo":
+                                    cargo_symbol:str = self.ask("Cargo Symbol")
+                                    units:str = self.ask("Number of Units")
+                                    if self.debug:
+                                        print(f"{cargo_symbol} {units}")
+                                    resp = self.current_ship.dump_cargo(cargo_symbol, int(units))
+                                    if self.debug:
+                                        print(resp)
                         case "get_contracts":
                             contracts = self.hero.get_contracts()
                             contract_ids = list(map(lambda c: c.id, contracts))

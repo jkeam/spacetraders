@@ -325,6 +325,10 @@ class Ship:
         except Exception as e:
             print(e)
 
+    def dump_cargo(self, cargo_symbol:str, units:int) -> dict:
+        """ Jettison cargo to make room """
+        return self.api.post_auth(f"my/ships/{self.symbol}/jettison", {"symbol": cargo_symbol, "units": units})
+
     def get_cargo(self) -> dict:
         """ Get Cargo """
         return self.api.get_auth(f"my/ships/{self.symbol}/cargo")
