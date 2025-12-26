@@ -33,8 +33,8 @@ class Printer():
             types.append(waypoint.type)
             xs.append(str(waypoint.x))
             ys.append(str(waypoint.y))
-            orbitals.append(", ".join(list(map(lambda w: w.waypoint, waypoint.orbitals))))
-            traits.append(", ".join(list(map(lambda w: w.symbol, waypoint.traits))))
+            orbitals.append("\n".join(list(map(lambda w: w.waypoint, waypoint.orbitals))))
+            traits.append("\n".join(list(map(lambda w: w.symbol, waypoint.traits))))
         pretty_waypoints:dict[str,list[str]] = {
             "Waypoint": ways,
             "Type": types,

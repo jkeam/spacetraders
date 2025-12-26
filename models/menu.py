@@ -57,7 +57,8 @@ class Menu:
         self.headquarter_shipyard_waypoints:list[Waypoint] = []
         self.current_headquarter_waypoint:Waypoint|None = None
         self.current_ship_type:str = ""
-        self.current_system:System = ""
+        self.current_system:System|None = None
+        self.current_contract:Contract|None = None
 
     def init_from_file(self, filename:str):
         with open(filename, "r") as stream:
@@ -144,7 +145,7 @@ class Menu:
                         case "get_headquarter_shipyard_waypoint":
                             waypoint_names:list[str] = list(map(lambda s: s.waypoint, self.headquarter_shipyard_waypoints))
                             cancel_text:str = self.add_back(waypoint_names)
-                            waypoint:str = self.ask_with_choice("Choose a waypoint?", waypoint_names)
+                            waypoint:str = self.ask_with_choice("Choose a headquarter waypoint?", waypoint_names)
                             if waypoint == cancel_text:
                                 self.back_current_choice()
                                 return True
@@ -272,20 +273,21 @@ class Menu:
                             if contract is None:
                                 print("Contract not found")
                             else:
+                                self.current_contract = contract
                                 self.printer.print_contract(contract)
-                                if not contract.accepted:
-                                    match self.ask_with_choice("Do you want to accept contract?", ["yes", "no"]):
-                                        case "yes":
-                                            self.hero.accept_contract(contract_id)
-                                            print("Accepted!")
                         case "update_contract":
+                            if self.current_contract is None:
+                                # no contract was selected but we got here, just fail
+                                return False
                             actions:list[str] = ["Accept"]
                             cancel_text:str = self.add_back(actions)
-                            action:str = self.ask_with_choice("Actions?", actions)
+                            action:str = self.ask_with_choice(f"Actions for {self.current_contract.id}?", actions)
                             if action == cancel_text:
                                 self.back_current_choice()
                                 return True
-                            print(action)
+                            resp = self.hero.accept_contract(self.current_contract.id)
+                            if self.debug:
+                                print(resp)
                         case "get_system":
                             system_names:list[str] = list(map(lambda s: s.name, self.hero.systems))
                             cancel_text:str = self.add_back(system_names)
@@ -302,7 +304,7 @@ class Menu:
                             actions:list[str] = ["Info", "Waypoints"]
                             cancel_text:str = self.add_back(actions)
                             system_symbol:str = self.current_system.symbol
-                            match self.ask_with_choice("Actions?", actions):
+                            match self.ask_with_choice(f"Actions for {system_symbol}?", actions):
                                 case x if x == cancel_text:
                                     self.back_current_choice()
                                     return True
