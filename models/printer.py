@@ -278,6 +278,22 @@ class Printer():
                 str(cargo.units),
             ]})
 
+    def print_import_export_exchange(self, title:str, the_list:list) -> None:
+        print(title)
+        if len(the_list) == 0:
+            print("[]")
+            return
+
+        names:list[str] = []
+        symbols:list[str] = []
+        for c in the_list:
+            names.append(c.name)
+            symbols.append(c.symbol)
+        self.print_list({
+            "Name": names,
+            "Symbol": symbols,
+        })
+
     def print_market(self, market:Market) -> None:
         # transactions:list[Transaction]
         print(f"Market at {market.symbol}")
@@ -289,70 +305,58 @@ class Printer():
         supplies:list[str] = []
         purchase_prices:list[str] = []
         sell_prices:list[str] = []
-        for c in market.trade_goods:
-            symbols.append(c.symbol)
-            trade_types.append(c.trade_type)
-            volumes.append(c.volume)
-            supplies.append(c.supply)
-            purchase_prices.append(c.purchase_price)
-            sell_prices.append(c.sell_price)
-        self.print_list({
-            "Symbols": symbols,
-            "Types": trade_types,
-            "Volumes": volumes,
-            "Supplies": supplies,
-            "Purchase $": purchase_prices,
-            "Sell $": sell_prices,
-        })
 
-        print("Exports")
-        names:list[str] = []
-        symbols:list[str] = []
-        for c in market.exports:
-            names.append(c.name)
-            symbols.append(c.symbol)
-        self.print_list({
-            "Names": names,
-            "Symbols": symbols,
-        })
+        if len(market.trade_goods) == 0:
+            print("[]")
+        else:
+            for c in market.trade_goods:
+                symbols.append(c.symbol)
+                trade_types.append(c.trade_type)
+                volumes.append(str(c.volume))
+                supplies.append(c.supply)
+                purchase_prices.append(str(c.purchase_price))
+                sell_prices.append(str(c.sell_price))
+            self.print_list({
+                "Symbol": symbols,
+                "Type": trade_types,
+                "Volume": volumes,
+                "Supply": supplies,
+                "Purchase Price": purchase_prices,
+                "Sell Price": sell_prices,
+            })
 
-        print("Imports")
-        names:list[str] = []
-        symbols:list[str] = []
-        for c in market.imports:
-            names.append(c.name)
-            symbols.append(c.symbol)
-        self.print_list({
-            "Names": names,
-            "Symbols": symbols,
-        })
+        self.print_import_export_exchange("Exports", market.exports)
+        self.print_import_export_exchange("Imports", market.imports)
+        self.print_import_export_exchange("Exchanges", market.exchanges)
 
-        print("Exchanges")
-        names:list[str] = []
-        symbols:list[str] = []
-        for c in market.exchanges:
-            names.append(c.name)
-            symbols.append(c.symbol)
-        self.print_list({
-            "Names": names,
-            "Symbols": symbols,
-        })
-
-        # TODO: finish implemeting this
-        # class Transaction:
-            # """ Transaction result """
-            # waypoint_symbol:str
-            # ship_symbol:str
-            # trade_symbol:str
-            # transaction_type:str
-            # units:int
-            # price_per_unit:int
-            # total_price:int
-            # bought_at:dt
         print("Transactions")
         waypoint_symbols:list[str] = []
-        for c in market.transactions:
-            waypoint_symbols.append(c.waypoint_symbol)
-        self.print_list({
-            "Waypoint Symbols": waypoint_symbols,
-        })
+        ship_symbols:list[str] = []
+        trade_symbols:list[str] = []
+        transaction_types:list[str] = []
+        units:list[str] = []
+        price_per_units:list[str] = []
+        total_prices:list[str] = []
+        bought_ats:list[str] = []
+        if len(market.transactions) == 0:
+            print("[]")
+        else:
+            for c in market.transactions:
+                waypoint_symbols.append(c.waypoint_symbol)
+                ship_symbols.append(c.ship_symbol)
+                trade_symbols.append(c.trade_symbol)
+                transaction_types.append(c.transaction_type)
+                units.append(str(c.units))
+                price_per_units.append(str(c.price_per_unit))
+                total_prices.append(str(c.total_price))
+                bought_ats.append(str(c.bought_at))
+            self.print_list({
+                "Waypoint Symbol": waypoint_symbols,
+                "Ship Symbol": ship_symbols,
+                "Trade Symbol": trade_symbols,
+                "Transaction Type": transaction_types,
+                "Unit": units,
+                "Price per Unit": price_per_units,
+                "Total Price": total_prices,
+                "Bought At": bought_ats,
+            })
