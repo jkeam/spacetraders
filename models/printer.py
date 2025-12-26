@@ -159,6 +159,9 @@ class Printer():
             ]
         })
 
+    def print_system(self, system:System) -> None:
+        self.print_systems([system])
+
     def print_systems(self, systems:list[System]) -> None:
         names:list[str] = []
         constellations:list[str] = []

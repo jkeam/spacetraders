@@ -187,6 +187,14 @@ class Hero:
         self.systems = list(map(lambda s: System(s), raw))
         return self.systems
 
+    def get_system(self, system_symbol:str) -> System:
+        """ Get single system by system symbol """
+        raw = self.api.get_auth(f"systems/{system_symbol}")["data"]
+        if self.debug:
+            print("Get System")
+            print(raw)
+        return System(raw)
+
     def get_waypoint(self, location) -> Waypoint:
         """ Get waypoint given a location """
         raw_waypoint = self.api.get_auth(f"systems/{location.system}/waypoints/{location.waypoint}")["data"]

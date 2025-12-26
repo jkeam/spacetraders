@@ -57,6 +57,7 @@ class Menu:
         self.headquarter_shipyard_waypoints:list[Waypoint] = []
         self.current_headquarter_waypoint:Waypoint|None = None
         self.current_ship_type:str = ""
+        self.current_system:System = ""
 
     def init_from_file(self, filename:str):
         with open(filename, "r") as stream:
@@ -113,6 +114,8 @@ class Menu:
     def query_user(self) -> bool:
         """ True to keep going, False to quit """
         if self.current_choice is not None:
+            if self.debug:
+                print(self.current_choice)
             match self.current_choice.choice_type:
                 case ChoiceType.PROMPT:
                     choice:str = self.ask_with_choice(
@@ -125,6 +128,7 @@ class Menu:
                             break
                     return self.advance_current_choice(matching_option.next_choice_name)
                 case ChoiceType.ACTION:
+                    print(f"Action {self.current_choice.route}")
                     match self.current_choice.route:
                         case "quit":
                             return False
@@ -249,19 +253,38 @@ class Menu:
                                 self.back_current_choice()
                                 return True
                             print(action)
-                        case "get_waypoints":
+                        case "get_system":
                             system_names:list[str] = list(map(lambda s: s.name, self.hero.systems))
                             cancel_text:str = self.add_back(system_names)
-                            system:str = self.ask_with_choice("Want waypoints?", system_names)
-                            if system == cancel_text:
+                            system_name:str = self.ask_with_choice("Pick a system to learn more:", system_names)
+                            if system_name == cancel_text:
                                 self.back_current_choice()
                                 return True
-
-                            matching:System|None = next((s for s in self.hero.systems if s.name == system), None)
+                            matching:System|None = next((s for s in self.hero.systems if s.name == system_name), None)
                             if matching is None:
-                                print("Unable to find matching system.")
-                            else:
-                                self.printer.print_waypoints(self.hero.get_waypoints(matching.symbol))
+                                return False
+                            self.current_system = self.hero.get_system(matching.symbol)
+                            self.printer.print_system(self.current_system)
+                            # self.current_system = matching
+
+                            # matching:System|None = next((s for s in self.hero.systems if s.name == system), None)
+                            # if matching is None:
+                                # print("Unable to find matching system.")
+                            # else:
+                                # self.printer.print_waypoints(self.hero.get_waypoints(matching.symbol))
+                        case "system_actions":
+                            actions:list[str] = ["Info", "Waypoints"]
+                            cancel_text:str = self.add_back(actions)
+                            system_symbol:str = self.current_system.symbol
+                            match self.ask_with_choice("Actions?", actions):
+                                case x if x == cancel_text:
+                                    self.back_current_choice()
+                                    return True
+                                case "Info":
+                                    system:System = self.hero.get_system(system_symbol)
+                                    self.printer.print_system(system)
+                                case "Waypoints":
+                                    self.printer.print_waypoints(self.hero.get_waypoints(system_symbol))
 
                     return self.advance_current_choice()
         return False
