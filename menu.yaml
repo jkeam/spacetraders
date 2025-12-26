@@ -13,7 +13,7 @@ choices:
       - text: Contracts
         next: get_contracts
       - text: Systems
-        next: systems
+        next: get_systems
       - text: Quit
         next: quit
   - name: headquarter
@@ -46,10 +46,11 @@ choices:
     type: action
     route: get_headquarter_shipyard_waypoints
     next: get_headquarter_shipyard_waypoint
-  - name: systems
+  - name: get_systems
     type: action
     route: get_systems
     next: get_system
+    back: root
   - name: get_agent
     type: action
     route: get_agent
@@ -95,7 +96,7 @@ choices:
     type: action
     route: get_system
     next: system_actions
-    back: get_systems
+    back: root
   - name: system_actions
     type: action
     route: system_actions

@@ -256,7 +256,7 @@ class Menu:
                         case "get_system":
                             system_names:list[str] = list(map(lambda s: s.name, self.hero.systems))
                             cancel_text:str = self.add_back(system_names)
-                            system_name:str = self.ask_with_choice("Pick a system to learn more:", system_names)
+                            system_name:str = self.ask_with_choice("Pick a system to learn more", system_names)
                             if system_name == cancel_text:
                                 self.back_current_choice()
                                 return True
@@ -265,13 +265,6 @@ class Menu:
                                 return False
                             self.current_system = self.hero.get_system(matching.symbol)
                             self.printer.print_system(self.current_system)
-                            # self.current_system = matching
-
-                            # matching:System|None = next((s for s in self.hero.systems if s.name == system), None)
-                            # if matching is None:
-                                # print("Unable to find matching system.")
-                            # else:
-                                # self.printer.print_waypoints(self.hero.get_waypoints(matching.symbol))
                         case "system_actions":
                             actions:list[str] = ["Info", "Waypoints"]
                             cancel_text:str = self.add_back(actions)
