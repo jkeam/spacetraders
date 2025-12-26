@@ -275,7 +275,11 @@ class Menu:
                                     try:
                                         is_scrap:bool = self.ask(f"Scrap {self.current_ship.name} (y/N)?") == "y"
                                         if is_scrap:
-                                                self.current_ship.scrap()
+                                                resp = self.current_ship.scrap()
+                                                if self.debug:
+                                                    print(resp)
+                                                # FIXME: navigate back to listing of all ships since this ship is gone now
+                                                #   Also remove this ship from my list of available ships
                                     except Exception as e:
                                         print(e)
                                 case "Extract":
