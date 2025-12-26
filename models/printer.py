@@ -1,6 +1,6 @@
 from tabulate import tabulate
 from models.waypoint import Waypoint
-from models.ship import Ship, ShipExtraction, ShipCooldown, ShipCargo, ShipMount
+from models.ship import Ship, ShipExtraction, ShipCooldown, ShipCargo, ShipMount, ShipModule
 from models.contract import Contract
 from models.agent import Agent
 from models.system import System
@@ -227,9 +227,9 @@ class Printer():
         for m in modules:
             names.append(m.name)
             symbols.append(m.symbol)
-            power.append(m.power_requirement)
-            crew.append(m.crew_requirement)
-            strength.append(m.strength)
+            power.append(str(m.power_requirement))
+            crew.append(str(m.crew_requirement))
+            strength.append(str(m.strength))
             description.append(m.description)
         self.print_list({
             "Names": names,
