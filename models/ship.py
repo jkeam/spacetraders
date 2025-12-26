@@ -330,7 +330,7 @@ class Ship:
         return { "agent": resp["agent"], "fuel": fuel, "transaction": transaction }
 
     def mine(self) -> dict:
-        """ Mine resources """
+        """ Mine resources, returns what is left on the asteroid or whatever we are mining """
         try:
             resp = self.api.post_auth(f"my/ships/{self.symbol}/extract")["data"]
             raw_extraction = resp["extraction"]

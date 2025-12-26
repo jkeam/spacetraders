@@ -194,7 +194,7 @@ class Menu:
                                 return False
                             cancel_text:str = self.add_back(actions)
                             print(self.current_ship.is_docked())
-                            match self.ask_with_choice("Actions?", actions):
+                            match self.ask_with_choice(f"Actions for {self.current_ship.name}", actions):
                                 case x if x == cancel_text:
                                     self.back_current_choice()
                                     return True
@@ -249,6 +249,7 @@ class Menu:
                                     if resp is None:
                                         print("Error, most likely need to cooldown")
                                     else:
+                                        print("Minable resources remaining")
                                         self.printer.print_extraction_results(
                                                 resp["extraction"],
                                                 resp["cooldown"],
