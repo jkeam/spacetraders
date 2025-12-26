@@ -1,6 +1,6 @@
 from tabulate import tabulate
 from models.waypoint import Waypoint
-from models.ship import Ship
+from models.ship import Ship, ShipExtraction, ShipCooldown, ShipCargo
 from models.contract import Contract
 from models.agent import Agent
 from models.system import System
@@ -191,3 +191,36 @@ class Printer():
 
     def print_waypoint(self, hq:Waypoint) -> None:
         self.print_waypoints([hq])
+
+    def print_extraction_results(self, extraction:ShipExtraction, cooldown:ShipCooldown, cargo:ShipCargo) -> None:
+        """ Print extraction results """
+        names:list[str] = []
+        symbols:list[str] = []
+        units:list[str] = []
+        for c in cargo.inventory:
+            names.append(c.name)
+            symbols.append(c.symbol)
+            units.append(str(c.units))
+        self.print_list({
+            "Names": names,
+            "Symbols": symbols,
+            "Units": units,
+        })
+        self.print_list({
+            "Field": [
+                "Ship",
+                "Element",
+                "Units",
+                "Cooldown(s)",
+                "Ready",
+                "Capacity",
+                "Used",
+            ], "Values": [
+                extraction.ship_symbol,
+                extraction.yield_symbol,
+                extraction.yield_units,
+                cooldown.total_seconds,
+                cooldown.expiration,
+                cargo.capacity,
+                cargo.units,
+            ]})

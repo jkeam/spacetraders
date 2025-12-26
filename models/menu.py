@@ -221,6 +221,13 @@ class Menu:
                                     resp = self.current_ship.mine()
                                     if self.debug:
                                         print(resp)
+                                    if resp is None:
+                                        print("Error, most likely need to cooldown")
+                                    else:
+                                        self.printer.print_extraction_results(
+                                                resp["extraction"],
+                                                resp["cooldown"],
+                                                resp["cargo"])
                         case "get_contracts":
                             contracts = self.hero.get_contracts()
                             contract_ids = list(map(lambda c: c.id, contracts))
