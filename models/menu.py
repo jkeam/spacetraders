@@ -10,6 +10,7 @@ from models.ship import Ship, ShipNav, Market, FlightMode
 from models.contract import Contract
 from models.printer import Printer
 from models.shipyard import Shipyard
+from datetime import datetime, timezone
 
 @dataclass
 class Option:
@@ -120,6 +121,10 @@ class Menu:
             page = int(page_str)
         return page
 
+    def current_time(self) -> datetime:
+        # Get current UTC time as a timezone-aware object
+        return datetime.now(timezone.utc)
+
     def query_user(self) -> bool:
         """ True to keep going, False to quit """
         if self.current_choice is not None:
@@ -228,6 +233,7 @@ class Menu:
                                     self.back_current_choice()
                                     return True
                                 case "Info":
+                                    print(f"Time now: {self.current_time()}")
                                     self.printer.print_ship(self.current_ship)
                                 case "Cargo":
                                     self.printer.print_cargo(self.current_ship.cargo)
@@ -295,6 +301,7 @@ class Menu:
                                         answer:str = self.ask("Where to (waypoint symbol)? Type 'cancel' to cancel")
                                         if answer.strip() != "cancel":
                                             nav:ShipNav = self.current_ship.fly(answer.upper())
+                                            print(f"Time now: {self.current_time()}")
                                             self.printer.print_nav(nav)
                                     except Exception as e:
                                         print(e)
