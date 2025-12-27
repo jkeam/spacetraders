@@ -142,7 +142,13 @@ class Menu:
                             hq:Waypoint = self.hero.get_headquarter()
                             self.printer.print_waypoint(hq)
                         case "get_headquarter_waypoints":
-                            self.printer.print_waypoints(self.hero.get_headquarter_waypoints())
+                            page_str:str = self.ask("Page (1)?")
+                            page:int = 0
+                            if page_str == "":
+                                page = 1
+                            else:
+                                page = int(page_str)
+                            self.printer.print_waypoints(self.hero.get_headquarter_waypoints(page))
                         case "get_headquarter_shipyard_waypoint":
                             waypoint_names:list[str] = list(map(lambda s: s.waypoint, self.headquarter_shipyard_waypoints))
                             cancel_text:str = self.add_back(waypoint_names)
@@ -171,10 +177,22 @@ class Menu:
                             if self.debug:
                                 print(resp)
                         case "get_headquarter_shipyard_waypoints":
-                            self.headquarter_shipyard_waypoints:list[Waypoint] = self.hero.get_headquarter_shipyard_waypoints()
+                            page_str:str = self.ask("Page (1)?")
+                            page:int = 0
+                            if page_str == "":
+                                page = 1
+                            else:
+                                page = int(page_str)
+                            self.headquarter_shipyard_waypoints = self.hero.get_headquarter_shipyard_waypoints(page)
                             self.printer.print_waypoints(self.headquarter_shipyard_waypoints)
                         case "get_headquarter_market_waypoints":
-                            self.headquarter_market_waypoints:list[Waypoint] = self.hero.get_headquarter_market_waypoints()
+                            page_str:str = self.ask("Page (1)?")
+                            page:int = 0
+                            if page_str == "":
+                                page = 1
+                            else:
+                                page = int(page_str)
+                            self.headquarter_market_waypoints = self.hero.get_headquarter_market_waypoints(page)
                             self.printer.print_waypoints(self.headquarter_market_waypoints)
                         case "get_my_ships":
                             self.hero.get_my_ships()

@@ -141,18 +141,27 @@ class Hero:
             print("Accept Contract")
             print(info)
 
-    def get_headquarter_waypoints(self) -> list[Waypoint]:
+    def get_headquarter_waypoints(self, page:int=1) -> list[Waypoint]:
         """ Get all the waypoints in the same system as the headquarter """
         self.get_agent(True)
         if self.headquarter is None:
             return []
-        return self.get_waypoints(self.headquarter.system)
+        return self.get_waypoints(self.headquarter.system, page)
 
-    def get_waypoints(self, system:str, trait:str="") -> list[Waypoint]:
+    def get_waypoints(self, system:str, trait:str="", page:int=1) -> list[Waypoint]:
         """ Get all the waypoints given a system """
         url:str = f"systems/{system}/waypoints"
+        params:str = ""
         if trait:
-            url = f"{url}?traits={trait}"
+            params = f"traits={trait}"
+        if page:
+            if params:
+                params = f"{params}&page={page}"
+            else:
+                params = f"page={page}"
+        url = f"{url}?{params}"
+        if self.debug:
+            print(url)
         raw_waypoints = self.api.get_auth(url)["data"]
         waypoints:list[Waypoint] = list(map(lambda w: Waypoint(w), raw_waypoints))
         if self.debug:
@@ -161,23 +170,23 @@ class Hero:
                 print(w)
         return waypoints
 
-    def get_shipyard_waypoints(self, system:str) -> list[Waypoint]:
+    def get_shipyard_waypoints(self, system:str, page:int=1) -> list[Waypoint]:
         """ Get all the shipyard waypoints given a system """
-        return self.get_waypoints(system, "SHIPYARD")
+        return self.get_waypoints(system, "SHIPYARD", page)
 
-    def get_market_waypoints(self, system:str) -> list[Waypoint]:
+    def get_market_waypoints(self, system:str, page:int=1) -> list[Waypoint]:
         """ Get all the market waypoints given a system """
-        return self.get_waypoints(system, "MARKETPLACE")
+        return self.get_waypoints(system, "MARKETPLACE", page)
 
-    def get_headquarter_shipyard_waypoints(self) -> list[Waypoint]:
+    def get_headquarter_shipyard_waypoints(self, page:int=1) -> list[Waypoint]:
         """ Get all the shipyard waypoints in HQ """
         self.get_agent(True)
-        return self.get_shipyard_waypoints(self.headquarter.system)
+        return self.get_shipyard_waypoints(self.headquarter.system, page)
 
-    def get_headquarter_market_waypoints(self) -> list[Waypoint]:
+    def get_headquarter_market_waypoints(self, page:int=1) -> list[Waypoint]:
         """ Get all the market waypoints in HQ """
         self.get_agent(True)
-        return self.get_waypoints(self.headquarter.system)
+        return self.get_market_waypoints(self.headquarter.system, page)
 
     def get_headquarter(self) -> Waypoint:
         """ Get the waypoint that represents the headquarter """
@@ -209,27 +218,8 @@ class Hero:
             print(raw_waypoint)
         return Waypoint(raw_waypoint)
 
-    def get_shipyard(self, shipyard_waypoint_symbol:str="") -> Shipyard|None:
+    def get_shipyard(self, shipyard_waypoint_symbol:str) -> Shipyard|None:
         """ Get all the ships available to purchase from headquarter """
-        if shipyard_waypoint_symbol == "":
-            return None
-
-        # lazy load waypoints
-        if len(self.headquarter_waypoints) == 0:
-            self.get_headquarter_waypoints()
-
-        if shipyard_waypoint_symbol == "":
-            for waypoint in self.headquarter_waypoints:
-                if shipyard_waypoint_symbol != "":
-                    break
-                for trait in waypoint.traits:
-                    if trait.symbol == "SHIPYARD":
-                        shipyard_waypoint_symbol = waypoint.waypoint
-                        break
-
-        if shipyard_waypoint_symbol == "":
-            return None
-
         system:str = "-".join(shipyard_waypoint_symbol.split("-")[0:2])
         raw = self.api.get_auth(f"systems/{system}/waypoints/{shipyard_waypoint_symbol}/shipyard")["data"]
         if self.debug:

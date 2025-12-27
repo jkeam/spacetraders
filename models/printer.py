@@ -100,8 +100,11 @@ class Printer():
                 f"{ship.nav.route.destination.type} at {ship.nav.route.destination.symbol} ({ship.nav.route.destination.x}, {ship.nav.route.destination.y}) at {ship.nav.route.arrival_at}",
             ],
         })
+        print("Cargo")
         self.print_cargo(ship.cargo)
+        print("Modules")
         self.print_modules(ship.modules)
+        print("Mounts")
         self.print_mounts(ship.mounts)
 
     def print_contract(self, contract:Contract) -> None:
