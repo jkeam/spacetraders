@@ -1,6 +1,7 @@
 from tabulate import tabulate
 from models.waypoint import Waypoint
 from models.ship import Ship, ShipExtraction, ShipCooldown, ShipCargo, ShipMount, ShipModule, Market, ShipNav
+from models.shipyard import Shipyard
 from models.contract import Contract
 from models.agent import Agent
 from models.system import System
@@ -374,4 +375,18 @@ class Printer():
             "Arrival": arrival_at,
             "Status": statuses,
             "Flight Mode": flight_modes
+        })
+
+    def print_shipyard(self, shipyard:Shipyard) -> None:
+        self.print_list({
+            "Field": [
+                "Symbol",
+                "Modifications Fee",
+                "Ship Types",
+            ],
+            "Values": [
+                shipyard.symbol,
+                str(shipyard.modifications_fee),
+                "\n".join(shipyard.ship_types),
+            ]
         })

@@ -188,7 +188,19 @@ class Menu:
                             ship:Ship = self.hero.ships_by_symbol[ship_name]
                             self.current_ship = ship
                         case "update_ship":
-                            actions:list[str] = ["Info", "Cargo", "Map", "Move", "Flight Mode", "Marketplace", "Sell", "Orbit", "Dock", "Refuel", "Scrap", "Extract"]
+                            actions:list[str] = ["Info",
+                                                 "Cargo",
+                                                 "Map",
+                                                 "Move",
+                                                 "Flight Mode",
+                                                 "Marketplace",
+                                                 "Shipyard",
+                                                 "Sell",
+                                                 "Orbit",
+                                                 "Dock",
+                                                 "Refuel",
+                                                 "Scrap",
+                                                 "Extract"]
                             # fail the app immediately if ship isn't set here
                             #   as it should be
                             if self.current_ship is None:
@@ -213,16 +225,13 @@ class Menu:
                                             if self.debug:
                                                 print(resp)
                                 case "Map":
-                                    # map where we are
-                                    # get waypoints
-                                    # loop through them and show the distances
-                                    # figure out how far 1 unit of fuel takes us
-                                    # show what's in reach
                                     ship:Ship = self.current_ship
                                     waypoints:list[Waypoint] = self.hero.get_waypoints(ship.nav.system)
                                     shipyard_waypoints:list[Waypoint] = self.hero.get_shipyard_waypoints(ship.nav.system)
+                                    market_waypoints:list[Waypoint] = self.hero.get_market_waypoints(ship.nav.system)
                                     distances:list[float] = []
                                     shipyard_distances:list[float] = []
+                                    market_distances:list[float] = []
                                     ship_x:int = ship.nav.route.destination.x
                                     ship_y:int = ship.nav.route.destination.y
                                     for w in waypoints:
@@ -233,10 +242,18 @@ class Menu:
                                         shipyard_distances.append(dist(
                                             [w.x, w.y],
                                             [ship_x, ship_y]))
+                                    for w in market_waypoints:
+                                        market_distances.append(dist(
+                                            [w.x, w.y],
+                                            [ship_x, ship_y]))
                                     print(f"Assuming at arrival location at {ship.nav.waypoint.waypoint} at ({ship_x}, {ship_y})")
                                     print(f"Ship has {ship.fuel.current} / {ship.fuel.capacity} units of fuel")
+                                    print("Waypoints")
                                     self.printer.print_waypoints(waypoints, distances)
+                                    print("Shipyards")
                                     self.printer.print_waypoints(shipyard_waypoints, shipyard_distances)
+                                    print("Markets")
+                                    self.printer.print_waypoints(market_waypoints, market_distances)
                                 case "Move":
                                     try:
                                         answer:str = self.ask("Where to (waypoint symbol)? Type 'cancel' to cancel")
@@ -263,6 +280,16 @@ class Menu:
                                 case "Marketplace":
                                     market:Market = self.current_ship.view_market()
                                     self.printer.print_market(market)
+                                case "Shipyard":
+                                    shipyard:Shipyard|None = self.hero.get_shipyard(self.current_ship.nav.waypoint.waypoint)
+                                    if shipyard is not None:
+                                        self.printer.print_shipyard(shipyard)
+                                        ship_types:list[str] = shipyard.ship_types
+                                        ship_types.insert(0, "CANCEL")
+                                        ship_type:str = self.ask_with_choice("Buy a ship?", ship_types)
+                                        if ship_type != "CANCEL":
+                                            self.current_ship_type = ship_type
+                                            print(ship_type)
                                 case "Sell":
                                     try:
                                         cargo_symbol:str = self.ask("Cargo Symbol")
@@ -283,9 +310,12 @@ class Menu:
                                     if self.debug:
                                         print(nav)
                                 case "Refuel":
-                                    resp = self.current_ship.refuel()
-                                    if self.debug:
-                                        print(resp)
+                                    try:
+                                        resp = self.current_ship.refuel()
+                                        if self.debug:
+                                            print(resp)
+                                    except Exception as e:
+                                        print(e)
                                 case "Scrap":
                                     try:
                                         is_scrap:bool = self.ask(f"Scrap {self.current_ship.name} (y/N)?") == "y"

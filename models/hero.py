@@ -148,25 +148,26 @@ class Hero:
             return []
         return self.get_waypoints(self.headquarter.system)
 
-    def get_waypoints(self, system:str) -> list[Waypoint]:
+    def get_waypoints(self, system:str, trait:str="") -> list[Waypoint]:
         """ Get all the waypoints given a system """
-        raw_waypoints = self.api.get_auth(f"systems/{system}/waypoints?limit=20")["data"]
+        url:str = f"systems/{system}/waypoints"
+        if trait:
+            url = f"{url}?traits={trait}"
+        raw_waypoints = self.api.get_auth(url)["data"]
         waypoints:list[Waypoint] = list(map(lambda w: Waypoint(w), raw_waypoints))
         if self.debug:
-            print(f"Get Waypoints for System {system}")
+            print(f"Get waypoints for system {system} and trait {trait}")
             for w in waypoints:
                 print(w)
         return waypoints
 
     def get_shipyard_waypoints(self, system:str) -> list[Waypoint]:
         """ Get all the shipyard waypoints given a system """
-        raw_waypoints = self.api.get_auth(f"systems/{system}/waypoints?traits=SHIPYARD&limit=20")["data"]
-        waypoints:list[Waypoint] = list(map(lambda w: Waypoint(w), raw_waypoints))
-        if self.debug:
-            print(f"Get Shipyard Waypoints for System {system}")
-            for w in waypoints:
-                print(w)
-        return waypoints
+        return self.get_waypoints(system, "SHIPYARD")
+
+    def get_market_waypoints(self, system:str) -> list[Waypoint]:
+        """ Get all the market waypoints given a system """
+        return self.get_waypoints(system, "MARKETPLACE")
 
     def get_headquarter_shipyard_waypoints(self) -> list[Waypoint]:
         """ Get all the shipyard waypoints in HQ """

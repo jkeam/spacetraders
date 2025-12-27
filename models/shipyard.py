@@ -1,8 +1,6 @@
 class Shipyard:
     """ Shipyard with ships """
 
-    # SHIP_MINING_DRONE
-
     def __init__(self, from_api:dict[str, any]) -> None:
         self.symbol:str = from_api['symbol']
         self.modifications_fee:int = from_api['modificationsFee']
