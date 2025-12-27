@@ -374,6 +374,7 @@ class Menu:
                                     resp = self.current_ship.mine()
                                     if self.debug:
                                         print(resp)
+                                    print(f"Time now: {self.current_time()}")
                                     if resp is None:
                                         print("Error, most likely need to cooldown")
                                     else:
