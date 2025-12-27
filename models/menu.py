@@ -113,6 +113,13 @@ class Menu:
         choices.insert(0, cancel_text)
         return cancel_text
 
+    def ask_page(self) -> int:
+        page_str:str = self.ask("Page (1)?")
+        page:int = 1
+        if page_str != "":
+            page = int(page_str)
+        return page
+
     def query_user(self) -> bool:
         """ True to keep going, False to quit """
         if self.current_choice is not None:
@@ -142,12 +149,7 @@ class Menu:
                             hq:Waypoint = self.hero.get_headquarter()
                             self.printer.print_waypoint(hq)
                         case "get_headquarter_waypoints":
-                            page_str:str = self.ask("Page (1)?")
-                            page:int = 0
-                            if page_str == "":
-                                page = 1
-                            else:
-                                page = int(page_str)
+                            page:int = self.ask_page()
                             self.printer.print_waypoints(self.hero.get_headquarter_waypoints(page))
                         case "get_headquarter_shipyard_waypoint":
                             waypoint_names:list[str] = list(map(lambda s: s.waypoint, self.headquarter_shipyard_waypoints))
@@ -177,21 +179,11 @@ class Menu:
                             if self.debug:
                                 print(resp)
                         case "get_headquarter_shipyard_waypoints":
-                            page_str:str = self.ask("Page (1)?")
-                            page:int = 0
-                            if page_str == "":
-                                page = 1
-                            else:
-                                page = int(page_str)
+                            page:int = self.ask_page()
                             self.headquarter_shipyard_waypoints = self.hero.get_headquarter_shipyard_waypoints(page)
                             self.printer.print_waypoints(self.headquarter_shipyard_waypoints)
                         case "get_headquarter_market_waypoints":
-                            page_str:str = self.ask("Page (1)?")
-                            page:int = 0
-                            if page_str == "":
-                                page = 1
-                            else:
-                                page = int(page_str)
+                            page:int = self.ask_page()
                             self.headquarter_market_waypoints = self.hero.get_headquarter_market_waypoints(page)
                             self.printer.print_waypoints(self.headquarter_market_waypoints)
                         case "get_my_ships":
@@ -213,6 +205,8 @@ class Menu:
                             actions:list[str] = ["Info",
                                                  "Cargo",
                                                  "Map",
+                                                 "Map of Shipyards",
+                                                 "Map of Markets",
                                                  "Move",
                                                  "Flight Mode",
                                                  "Marketplace",
@@ -248,32 +242,52 @@ class Menu:
                                                 print(resp)
                                 case "Map":
                                     ship:Ship = self.current_ship
-                                    waypoints:list[Waypoint] = self.hero.get_waypoints(ship.nav.system)
-                                    shipyard_waypoints:list[Waypoint] = self.hero.get_shipyard_waypoints(ship.nav.system)
-                                    market_waypoints:list[Waypoint] = self.hero.get_market_waypoints(ship.nav.system)
-                                    distances:list[float] = []
-                                    shipyard_distances:list[float] = []
-                                    market_distances:list[float] = []
                                     ship_x:int = ship.nav.route.destination.x
                                     ship_y:int = ship.nav.route.destination.y
+                                    print(f"Assuming at arrival location at {ship.nav.waypoint.waypoint} at ({ship_x}, {ship_y})")
+                                    print(f"Ship has {ship.fuel.current} / {ship.fuel.capacity} units of fuel")
+                                    page:int = self.ask_page()
+                                    waypoints:list[Waypoint] = self.hero.get_waypoints(ship.nav.system, "", page)
+                                    distances:list[float] = []
                                     for w in waypoints:
                                         distances.append(dist(
                                             [w.x, w.y],
                                             [ship_x, ship_y]))
+
+                                    print("Waypoints")
+                                    self.printer.print_waypoints(waypoints, distances)
+                                case "Map of Shipyards":
+                                    ship:Ship = self.current_ship
+                                    ship_x:int = ship.nav.route.destination.x
+                                    ship_y:int = ship.nav.route.destination.y
+                                    print(f"Assuming at arrival location at {ship.nav.waypoint.waypoint} at ({ship_x}, {ship_y})")
+                                    print(f"Ship has {ship.fuel.current} / {ship.fuel.capacity} units of fuel")
+
+                                    page:int = self.ask_page()
+                                    shipyard_waypoints:list[Waypoint] = self.hero.get_shipyard_waypoints(ship.nav.system, page)
+                                    shipyard_distances:list[float] = []
                                     for w in shipyard_waypoints:
                                         shipyard_distances.append(dist(
                                             [w.x, w.y],
                                             [ship_x, ship_y]))
+
+                                    print("Shipyards")
+                                    self.printer.print_waypoints(shipyard_waypoints, shipyard_distances)
+                                case "Map of Markets":
+                                    ship:Ship = self.current_ship
+                                    ship_x:int = ship.nav.route.destination.x
+                                    ship_y:int = ship.nav.route.destination.y
+                                    print(f"Assuming at arrival location at {ship.nav.waypoint.waypoint} at ({ship_x}, {ship_y})")
+                                    print(f"Ship has {ship.fuel.current} / {ship.fuel.capacity} units of fuel")
+
+                                    page:int = self.ask_page()
+                                    market_waypoints:list[Waypoint] = self.hero.get_market_waypoints(ship.nav.system, page)
+                                    market_distances:list[float] = []
                                     for w in market_waypoints:
                                         market_distances.append(dist(
                                             [w.x, w.y],
                                             [ship_x, ship_y]))
-                                    print(f"Assuming at arrival location at {ship.nav.waypoint.waypoint} at ({ship_x}, {ship_y})")
-                                    print(f"Ship has {ship.fuel.current} / {ship.fuel.capacity} units of fuel")
-                                    print("Waypoints")
-                                    self.printer.print_waypoints(waypoints, distances)
-                                    print("Shipyards")
-                                    self.printer.print_waypoints(shipyard_waypoints, shipyard_distances)
+
                                     print("Markets")
                                     self.printer.print_waypoints(market_waypoints, market_distances)
                                 case "Move":
@@ -407,7 +421,7 @@ class Menu:
                             self.current_system = self.hero.get_system(matching.symbol)
                             self.printer.print_system(self.current_system)
                         case "system_actions":
-                            actions:list[str] = ["Info", "Waypoints"]
+                            actions:list[str] = ["Info", "Waypoints", "Shipyards", "Markets"]
                             cancel_text:str = self.add_back(actions)
                             system_symbol:str = self.current_system.symbol
                             match self.ask_with_choice(f"Actions for {system_symbol}?", actions):
@@ -418,7 +432,17 @@ class Menu:
                                     system:System = self.hero.get_system(system_symbol)
                                     self.printer.print_system(system)
                                 case "Waypoints":
-                                    self.printer.print_waypoints(self.hero.get_waypoints(system_symbol))
+                                    page:int = self.ask_page()
+                                    waypoints:list[Waypoint] = self.hero.get_waypoints(system_symbol, "", page)
+                                    self.printer.print_waypoints(waypoints)
+                                case "Shipyards":
+                                    page:int = self.ask_page()
+                                    waypoints:list[Waypoint] = self.hero.get_waypoints(system_symbol, "SHIPYARD", page)
+                                    self.printer.print_waypoints(waypoints)
+                                case "Markets":
+                                    page:int = self.ask_page()
+                                    waypoints:list[Waypoint] = self.hero.get_waypoints(system_symbol, "MARKETPLACE", page)
+                                    self.printer.print_waypoints(waypoints)
 
                     return self.advance_current_choice()
         return False
