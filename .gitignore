@@ -5,3 +5,4 @@ venv
 ignore/
 .python-version
 data.yaml
+*.swp

@@ -2,6 +2,7 @@ from datetime import datetime as dt
 from dataclasses import dataclass
 from models.location import Location
 from models.spacetrader import Spacetrader
+from enum import Enum
 
 @dataclass
 class TradeGood:
@@ -184,6 +185,12 @@ class Transaction:
     total_price:int
     bought_at:dt
 
+class FlightMode(Enum):
+    CRUISE = 1  # Default, regular fuel usage, regular speed
+    BURN = 2    # Fast, fast fuel usage, fast speed
+    DRIFT = 3   # Slow, slow fuel usage, slow speed, use when low on fuel
+    STEALTH = 4 # Difficult to detect, regular fuel usage, slow speed, use to avoid enemies
+
 class Ship:
     """ Ship """
     def __init__(self, api:Spacetrader, ship:dict[str, any]) -> None:
@@ -305,6 +312,16 @@ class Ship:
         """ Dock ship """
         resp = self.api.post_auth(f"my/ships/{self.symbol}/dock")["data"]
         return self._create_nav(resp["nav"])
+
+    def update_flight_mode(self, flight_mode:FlightMode) -> ShipNav:
+        """ Update flight mode """
+        resp = self.api.patch_auth(f"my/ships/{self.symbol}/nav", {"flightMode": flight_mode.name})["data"]
+        return self._create_nav(resp)
+
+    def get_flight_mode(self) -> ShipNav:
+        """ Get flight mode """
+        resp = self.api.get_auth(f"my/ships/{self.symbol}/nav")["data"]
+        return self._create_nav(resp)
 
     def refuel(self) -> dict:
         """ Refuel ship """

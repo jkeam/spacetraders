@@ -20,6 +20,9 @@ class Spacetrader:
     def post_noauth(self, path:str, data:dict = {}) -> dict:
         return self._call_endpoint("POST", True, path, data)
 
+    def patch_auth(self, path:str, data:dict = {}) -> dict:
+        return self._call_endpoint("PATCH", True, path, data)
+
     # Helper Methods
 
     def _call_endpoint(self, method:str, authenticated:bool, path:str, data:dict) -> dict:

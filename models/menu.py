@@ -6,7 +6,7 @@ from inquirer import prompt, List as IList, Text as IText
 from models.hero import Hero
 from models.system import System
 from models.waypoint import Waypoint
-from models.ship import Ship, ShipNav, Market
+from models.ship import Ship, ShipNav, Market, FlightMode
 from models.contract import Contract
 from models.printer import Printer
 from models.shipyard import Shipyard
@@ -188,7 +188,7 @@ class Menu:
                             ship:Ship = self.hero.ships_by_symbol[ship_name]
                             self.current_ship = ship
                         case "update_ship":
-                            actions:list[str] = ["Info", "Cargo", "Map", "Move", "Marketplace", "Sell", "Orbit", "Dock", "Refuel", "Scrap", "Extract"]
+                            actions:list[str] = ["Info", "Cargo", "Map", "Move", "Flight Mode", "Marketplace", "Sell", "Orbit", "Dock", "Refuel", "Scrap", "Extract"]
                             # fail the app immediately if ship isn't set here
                             #   as it should be
                             if self.current_ship is None:
@@ -243,6 +243,21 @@ class Menu:
                                         if answer.strip() != "cancel":
                                             nav:ShipNav = self.current_ship.fly(answer.upper())
                                             self.printer.print_nav(nav)
+                                    except Exception as e:
+                                        print(e)
+                                case "Flight Mode":
+                                    try:
+                                        choices:list[str] = [f.name for f in FlightMode]
+                                        choices.insert(0, "SEE")
+                                        choices.insert(0, "CANCEL")
+                                        answer:str = self.ask_with_choice(
+                                                "New flight mode? SEE to see, CANCEL to cancel",
+                                                choices).strip()
+                                        if answer == "SEE":
+                                            self.printer.print_nav(self.current_ship.get_flight_mode())
+                                        elif answer != "CANCEL":
+                                            self.printer.print_nav(
+                                                    self.current_ship.update_flight_mode(FlightMode[answer.upper()]))
                                     except Exception as e:
                                         print(e)
                                 case "Marketplace":
