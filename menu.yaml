@@ -28,6 +28,8 @@ choices:
         next: get_headquarter_waypoints
       - text: Headquarter Shipyard Waypoints
         next: get_headquarter_shipyard_waypoints
+      - text: Headquarter Market Waypoints
+        next: get_headquarter_market_waypoints
   - name: get_headquarter_shipyard_waypoint
     type: action
     route: get_headquarter_shipyard_waypoint
@@ -46,6 +48,10 @@ choices:
     type: action
     route: get_headquarter_shipyard_waypoints
     next: get_headquarter_shipyard_waypoint
+  - name: get_headquarter_market_waypoints
+    type: action
+    route: get_headquarter_market_waypoints
+    next: headquarter
   - name: get_systems
     type: action
     route: get_systems

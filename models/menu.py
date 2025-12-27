@@ -55,6 +55,7 @@ class Menu:
         self.current_choice:Choice = self.default_quit_choice
         self.current_ship:Ship|None = None
         self.headquarter_shipyard_waypoints:list[Waypoint] = []
+        self.headquarter_market_waypoints:list[Waypoint] = []
         self.current_headquarter_waypoint:Waypoint|None = None
         self.current_ship_type:str = ""
         self.current_system:System|None = None
@@ -172,6 +173,9 @@ class Menu:
                         case "get_headquarter_shipyard_waypoints":
                             self.headquarter_shipyard_waypoints:list[Waypoint] = self.hero.get_headquarter_shipyard_waypoints()
                             self.printer.print_waypoints(self.headquarter_shipyard_waypoints)
+                        case "get_headquarter_market_waypoints":
+                            self.headquarter_market_waypoints:list[Waypoint] = self.hero.get_headquarter_market_waypoints()
+                            self.printer.print_waypoints(self.headquarter_market_waypoints)
                         case "get_my_ships":
                             self.hero.get_my_ships()
                             ships:list[Ship] = list(self.hero.ships_by_symbol.values())

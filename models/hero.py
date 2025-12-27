@@ -174,6 +174,11 @@ class Hero:
         self.get_agent(True)
         return self.get_shipyard_waypoints(self.headquarter.system)
 
+    def get_headquarter_market_waypoints(self) -> list[Waypoint]:
+        """ Get all the market waypoints in HQ """
+        self.get_agent(True)
+        return self.get_waypoints(self.headquarter.system)
+
     def get_headquarter(self) -> Waypoint:
         """ Get the waypoint that represents the headquarter """
         self.get_agent(True)
