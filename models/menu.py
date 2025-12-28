@@ -321,18 +321,24 @@ class Menu:
                                     except Exception as e:
                                         print(e)
                                 case "Marketplace":
-                                    market:Market = self.current_ship.view_market()
-                                    self.printer.print_market(market)
+                                    try:
+                                        market:Market = self.current_ship.view_market()
+                                        self.printer.print_market(market)
+                                    except Exception as e:
+                                        print(e)
                                 case "Shipyard":
-                                    shipyard:Shipyard|None = self.hero.get_shipyard(self.current_ship.nav.waypoint.waypoint)
-                                    if shipyard is not None:
-                                        self.printer.print_shipyard(shipyard)
-                                        ship_types:list[str] = shipyard.ship_types
-                                        ship_types.insert(0, "CANCEL")
-                                        ship_type:str = self.ask_with_choice("Buy a ship?", ship_types)
-                                        if ship_type != "CANCEL":
-                                            self.current_ship_type = ship_type
-                                            print(ship_type)
+                                    try:
+                                        shipyard:Shipyard|None = self.hero.get_shipyard(self.current_ship.nav.waypoint.waypoint)
+                                        if shipyard is not None:
+                                            self.printer.print_shipyard(shipyard)
+                                            ship_types:list[str] = shipyard.ship_types
+                                            ship_types.insert(0, "CANCEL")
+                                            ship_type:str = self.ask_with_choice("Buy a ship?", ship_types)
+                                            if ship_type != "CANCEL":
+                                                self.current_ship_type = ship_type
+                                                print(ship_type)
+                                    except Exception as e:
+                                        print(e)
                                 case "Sell":
                                     try:
                                         cargo_symbol:str = self.ask("Cargo Symbol")
