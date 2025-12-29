@@ -29,9 +29,8 @@ class Contract:
                                                list(map(lambda d: ContractDelivery(d["tradeSymbol"], d["destinationSymbol"], d["unitsRequired"], d["unitsFulfilled"]), cont.get("terms", {}).get("deliver", []))))
         self.accepted:bool = cont["accepted"]
         self.fulfilled:bool = cont["fulfilled"]
-        self.expiration:dt = dt.fromisoformat(cont["expiration"])
-        self.deadline:dt = dt.fromisoformat(cont["deadlineToAccept"])
+        self.deadline_to_accept:dt = dt.fromisoformat(cont["deadlineToAccept"])
 
     def __str__(self) -> str:
-        return f"Contract(id: {self.id}, faction: {self.faction}, type: {self.type}, terms: {self.terms}, accepted: {self.accepted}, fulfilled: {self.fulfilled}, expiration: {self.expiration}, deadline: {self.deadline})"
+        return f"Contract(id: {self.id}, faction: {self.faction}, type: {self.type}, terms: {self.terms}, accepted: {self.accepted}, fulfilled: {self.fulfilled}, deadline_to_accept: {self.deadline_to_accept})"
 

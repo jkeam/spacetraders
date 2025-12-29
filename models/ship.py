@@ -14,15 +14,6 @@ class TradeGood:
     sell_price:int
 
 @dataclass
-class Market:
-    symbol:str
-    exports:list[Export]
-    imports:list[Import]
-    exchanges:list[Exchange]
-    transactions:list[Transaction]
-    trade_goods:list[TradeGood]
-
-@dataclass
 class Export:
     symbol:str
     name:str
@@ -190,6 +181,56 @@ class FlightMode(Enum):
     BURN = 2    # Fast, fast fuel usage, fast speed
     DRIFT = 3   # Slow, slow fuel usage, slow speed, use when low on fuel
     STEALTH = 4 # Difficult to detect, regular fuel usage, slow speed, use to avoid enemies
+
+class Market:
+    """ Market """
+    def __init__(self) -> None:
+        self.symbol:str = ""
+        self.exports:list[Export] = []
+        self.imports:list[Import] = []
+        self.exchanges:list[Exchange] = []
+        self.transactions:list[Transaction] = []
+        self.trade_goods:list[TradeGood] = []
+
+    def __str__(self) -> str:
+        return f"Market(symbol: {self.symbol}, exports: {self.exports}, imports: {self.imports}, exchanges: {self.exchanges}, transactions: {self.transactions}, trade_goods: {self.trade_goods}"
+
+    def parse_market(self, raw:dict) -> Market:
+        exports:list[Export] = list(map(lambda x: Export(x["symbol"], x["name"], x["description"]), raw["exports"]))
+        imports:list[Import] = list(map(lambda x: Import(x["symbol"], x["name"], x["description"]), raw["imports"]))
+        exchanges:list[Exchange] = list(map(lambda x: Exchange(x["symbol"], x["name"], x["description"]), raw["exchange"]))
+        transactions:list[Transaction] = []
+        trade_goods:list[TradeGood] = []
+
+        for raw_transaction in raw["transactions"]:
+            transactions.append(Transaction(
+                raw_transaction["waypointSymbol"],
+                raw_transaction["shipSymbol"],
+                raw_transaction["tradeSymbol"],
+                raw_transaction["type"],
+                raw_transaction["units"],
+                raw_transaction["pricePerUnit"],
+                raw_transaction["totalPrice"],
+                raw_transaction["timestamp"],
+            ))
+
+        for raw_good in raw["tradeGoods"]:
+            trade_goods.append(TradeGood(
+                raw_good["symbol"],
+                raw_good["type"],
+                raw_good["tradeVolume"],
+                raw_good["supply"],
+                raw_good["purchasePrice"],
+                raw_good["sellPrice"],
+            ))
+        self.symbol = raw["symbol"]
+        self.exports = exports
+        self.imports = imports
+        self.exchanges = exchanges
+        self.transactions = transactions
+        self.trade_goods = trade_goods
+        return self
+
 
 class Ship:
     """ Ship """
@@ -396,46 +437,12 @@ class Ship:
                 list(map(lambda i: ShipCargoItem(i["symbol"], i["name"], i["description"], i["units"]), cargo["inventory"])))
         return self.cargo
 
-    def view_market(self) -> Market:
+    def get_market(self) -> Market:
         """ View Market, only works if we are at an asteroid field """
         raw = self.api.get_auth(f"systems/{self.nav.system}/waypoints/{self.nav.waypoint.waypoint}/market")["data"]
-
-        exports:list[Export] = list(map(lambda x: Export(x["symbol"], x["name"], x["description"]), raw["exports"]))
-        imports:list[Import] = list(map(lambda x: Import(x["symbol"], x["name"], x["description"]), raw["imports"]))
-        exchanges:list[Exchange] = list(map(lambda x: Exchange(x["symbol"], x["name"], x["description"]), raw["exchange"]))
-        transactions:list[Transaction] = []
-        trade_goods:list[TradeGood] = []
-
-        for raw_transaction in raw["transactions"]:
-            transactions.append(Transaction(
-                raw_transaction["waypointSymbol"],
-                raw_transaction["shipSymbol"],
-                raw_transaction["tradeSymbol"],
-                raw_transaction["type"],
-                raw_transaction["units"],
-                raw_transaction["pricePerUnit"],
-                raw_transaction["totalPrice"],
-                raw_transaction["timestamp"],
-            ))
-
-        for raw_good in raw["tradeGoods"]:
-            trade_goods.append(TradeGood(
-                raw_good["symbol"],
-                raw_good["type"],
-                raw_good["tradeVolume"],
-                raw_good["supply"],
-                raw_good["purchasePrice"],
-                raw_good["sellPrice"],
-            ))
-
-        return Market(
-            raw["symbol"],
-            exports,
-            imports,
-            exchanges,
-            transactions,
-            trade_goods
-        )
+        market:Market = Market()
+        market.parse_market(raw)
+        return market
 
     def sell_all_cargo(self, except_symbols:list[str]) -> None:
         """ Sell all cargo """

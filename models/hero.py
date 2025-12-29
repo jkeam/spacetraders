@@ -1,6 +1,6 @@
 from yaml import dump, safe_load, YAMLError
 from time import sleep
-from models.ship import Ship, ShipCargo
+from models.ship import Ship, ShipCargo, Market
 from models.waypoint import Waypoint
 from models.location import Location
 from models.spacetrader import Spacetrader
@@ -251,11 +251,24 @@ class Hero:
     def get_shipyard(self, shipyard_waypoint_symbol:str) -> Shipyard|None:
         """ Get all the ships available to purchase from headquarter """
         system:str = "-".join(shipyard_waypoint_symbol.split("-")[0:2])
-        raw = self.api.get_auth(f"systems/{system}/waypoints/{shipyard_waypoint_symbol}/shipyard")["data"]
+        raw = self.api.get_auth(f"systems/{system}/waypoints/{shipyard_waypoint_symbol}/shipyard").get("data", None)
         if self.debug:
             print("Get Shipyard")
             print(raw)
+        if raw is None:
+            return None
         return Shipyard(raw)
+
+    def get_market(self, waypoint_symbol:str) -> Market|None:
+        """ Get all the market info """
+        system:str = "-".join(waypoint_symbol.split("-")[0:2])
+        raw = self.api.get_auth(f"systems/{system}/waypoints/{waypoint_symbol}/market")["data"]
+        if self.debug:
+            print("Get Market")
+            print(raw)
+        market:Market = Market()
+        market.parse_market(raw)
+        return market
 
     def buy_ship(self, ship_type:str="SHIP_MINING_DRONE", symbol:str="") -> dict:
         """ Buy ship type at given symbol """
@@ -324,15 +337,14 @@ class Hero:
             return matching.cargo
         return None
 
-    def view_market(self, ship_name:str) -> dict:
-        """ View market """
-        # FIXME: turn dict into object
-        matching = self._find_ship_by_name(ship_name)
-        if matching is not None:
-            if self.debug:
-                print("View Market")
-            return matching.view_market()
-        return {}
+    # def get_market_by_ship(self, ship_name:str) -> Market|None:
+        # """ View market """
+        # matching = self._find_ship_by_name(ship_name)
+        # if matching is not None:
+            # if self.debug:
+                # print("Get Market")
+            # return matching.get_market()
+        # return None
 
     def sell_all_cargo(self, ship_name:str, except_symbols:list[str] = []) -> None:
         """ Sell all cargo """

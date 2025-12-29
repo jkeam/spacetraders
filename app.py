@@ -50,7 +50,7 @@ def main() -> None:
 
     # see things
     # hero.get_cargo(ship_name)
-    # hero.view_market(ship_name)
+    # hero.get_market(ship_name)
 
 if __name__ == '__main__':
     main()

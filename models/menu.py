@@ -170,15 +170,37 @@ class Menu:
                             else:
                                 self.current_headquarter_waypoint = matching
                                 print(matching)
-                        case "get_headquarter_ships":
-                            shipyard:Shipyard = self.hero.get_shipyard(self.current_headquarter_waypoint.waypoint)
-                            ship_types:list[str] = shipyard.ship_types
-                            cancel_text:str = self.add_back(ship_types)
-                            ship_type:str = self.ask_with_choice("Buy a ship?", ship_types)
-                            if ship_type == cancel_text:
+                        case "get_headquarter_market_waypoint":
+                            waypoint_names:list[str] = list(map(lambda s: s.waypoint, self.headquarter_market_waypoints))
+                            cancel_text:str = self.add_back(waypoint_names)
+                            waypoint:str = self.ask_with_choice("Choose a headquarter waypoint?", waypoint_names)
+                            if waypoint == cancel_text:
                                 self.back_current_choice()
                                 return True
-                            self.current_ship_type = ship_type
+
+                            matching:Waypoint|None = next((s for s in self.headquarter_market_waypoints if s.waypoint == waypoint), None)
+                            if matching is None:
+                                print("Unable to find matching waypoint.")
+                            else:
+                                self.current_headquarter_waypoint = matching
+                                print(matching)
+                        case "get_headquarter_ships":
+                            shipyard:Shipyard = self.hero.get_shipyard(self.current_headquarter_waypoint.waypoint)
+                            if shipyard is not None:
+                                ship_types:list[str] = shipyard.ship_types
+                                cancel_text:str = self.add_back(ship_types)
+                                ship_type:str = self.ask_with_choice("Buy a ship?", ship_types)
+                                if ship_type == cancel_text:
+                                    self.back_current_choice()
+                                    return True
+                                self.current_ship_type = ship_type
+                        case "get_markets":
+                            try:
+                                market:Market|None = self.hero.get_market(self.current_headquarter_waypoint.waypoint)
+                                if market is not None:
+                                    self.printer.print_market(market)
+                            except Exception as e:
+                                print(e)
                         case "update_headquarter_ships":
                             resp = self.hero.buy_ship(self.current_ship_type, self.current_headquarter_waypoint.waypoint)
                             if self.debug:
@@ -214,7 +236,7 @@ class Menu:
                                                  "Map of Markets",
                                                  "Move",
                                                  "Flight Mode",
-                                                 "Marketplace",
+                                                 "Market",
                                                  "Shipyard",
                                                  "Sell",
                                                  "Orbit",
@@ -320,10 +342,11 @@ class Menu:
                                                     self.current_ship.update_flight_mode(FlightMode[answer.upper()]))
                                     except Exception as e:
                                         print(e)
-                                case "Marketplace":
+                                case "Market":
                                     try:
-                                        market:Market = self.current_ship.view_market()
-                                        self.printer.print_market(market)
+                                        market:Market|None = self.current_ship.get_market()
+                                        if market is not None:
+                                            self.printer.print_market(market)
                                     except Exception as e:
                                         print(e)
                                 case "Shipyard":
@@ -457,9 +480,8 @@ class Menu:
                                     waypoint_names.insert(0, "back")
                                     waypoint:str = self.ask_with_choice(f"Choose waypoint for {system_symbol}", waypoint_names)
                                     if waypoint != "back":
-                                        print(f"see ships for {waypoint}")
                                         try:
-                                            shipyard:Shipyard = self.hero.get_shipyard(waypoint)
+                                            shipyard:Shipyard|None = self.hero.get_shipyard(waypoint)
                                             if shipyard is not None:
                                                 self.printer.print_simple_list("Ships", shipyard.ship_types)
                                         except Exception as e:
@@ -468,6 +490,18 @@ class Menu:
                                     page:int = self.ask_page()
                                     waypoints:list[Waypoint] = self.hero.get_waypoints(system_symbol, "MARKETPLACE", page)
                                     self.printer.print_waypoints(waypoints)
+                                    waypoint_names:list[str] = list(map(lambda w: w.waypoint, waypoints))
+                                    waypoint_names.insert(0, "back")
+                                    waypoint:str = self.ask_with_choice(f"Choose waypoint for {system_symbol}", waypoint_names)
+                                    if waypoint != "back":
+                                        try:
+                                            market:Market|None = self.hero.get_market(waypoint)
+                                            if market is not None:
+                                                self.printer.print_market(market)
+                                            else:
+                                                print("No market found")
+                                        except Exception as e:
+                                            print(e)
 
                     return self.advance_current_choice()
         return False

@@ -30,6 +30,11 @@ choices:
         next: get_headquarter_shipyard_waypoints
       - text: Headquarter Market Waypoints
         next: get_headquarter_market_waypoints
+  - name: get_headquarter_market_waypoint
+    type: action
+    route: get_headquarter_market_waypoint
+    next: get_markets
+    back: headquarter
   - name: get_headquarter_shipyard_waypoint
     type: action
     route: get_headquarter_shipyard_waypoint
@@ -40,6 +45,11 @@ choices:
     route: get_headquarter_ships
     next: update_headquarter_ships
     back: get_headquarter_shipyard_waypoint
+  - name: get_markets
+    type: action
+    route: get_markets
+    next: get_headquarter_market_waypoint
+    back: get_headquarter_market_waypoint
   - name: update_headquarter_ships
     type: action
     route: update_headquarter_ships
@@ -51,7 +61,7 @@ choices:
   - name: get_headquarter_market_waypoints
     type: action
     route: get_headquarter_market_waypoints
-    next: headquarter
+    next: get_headquarter_market_waypoint
   - name: get_systems
     type: action
     route: get_systems
