@@ -237,6 +237,9 @@ class Ship:
     """ Ship """
     def __init__(self, api:Spacetrader, ship:dict[str, any]) -> None:
         self.api = api
+        self.parse_ship(ship)
+
+    def parse_ship(self, ship:dict[str, any]) -> None:
         self.name:str = ship.get("name", "")
         self.faction:str = ship.get("factionSymbol", "")
         self.role:str = ship.get("role", "")
@@ -504,3 +507,8 @@ class Ship:
             "contract": resp["contract"],
             "cargo": resp["cargo"]
         }
+
+    def refresh(self) -> None:
+        """ Refresh this data """
+        resp = self.api.get_auth(f"my/ships/{self.symbol}")["data"]
+        self.parse_ship(resp)

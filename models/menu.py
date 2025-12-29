@@ -231,7 +231,8 @@ class Menu:
                             ship:Ship = self.hero.ships_by_symbol[ship_name]
                             self.current_ship = ship
                         case "update_ship":
-                            actions:list[str] = ["Info",
+                            actions:list[str] = ["Refresh",
+                                                 "Info",
                                                  "Cargo",
                                                  "Map",
                                                  "Map of Shipyards",
@@ -425,6 +426,8 @@ class Menu:
                                                 resp["extraction"],
                                                 resp["cooldown"],
                                                 resp["cargo"])
+                                case "Refresh":
+                                    self.current_ship.refresh()
                         case "get_contracts":
                             contracts = self.hero.get_contracts()
                             contract_ids = list(map(lambda c: c.id, contracts))
