@@ -234,7 +234,7 @@ class Menu:
                             actions:list[str] = ["Refresh",
                                                  "Info",
                                                  "Cargo",
-                                                 "Map",
+                                                 "Map of Waypoints",
                                                  "Map of Shipyards",
                                                  "Map of Markets",
                                                  "Move",
@@ -264,7 +264,7 @@ class Menu:
                                     self.printer.print_ship(self.current_ship)
                                 case "Cargo":
                                     self.printer.print_cargo(self.current_ship.cargo)
-                                case "Map":
+                                case "Map of Waypoints":
                                     ship:Ship = self.current_ship
                                     ship_x:int = ship.nav.route.destination.x
                                     ship_y:int = ship.nav.route.destination.y
