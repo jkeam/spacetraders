@@ -241,6 +241,7 @@ class Menu:
                                                  "Market",
                                                  "Shipyard",
                                                  "Sell",
+                                                 "Deliver",
                                                  "Orbit",
                                                  "Dock",
                                                  "Refuel",
@@ -373,6 +374,17 @@ class Menu:
                                         resp = self.current_ship.sell_cargo(cargo_symbol, int(units))
                                         if self.debug:
                                             print(resp)
+                                    except Exception as e:
+                                        print(e)
+                                case "Deliver":
+                                    try:
+                                        contract_id:str = self.ask("Contract id, cancel to cancel")
+                                        if contract_id != 'cancel':
+                                            trade_symbol:str = self.ask("Trade symbol")
+                                            units:str = self.ask("Number of units")
+                                            resp = self.current_ship.deliver(contract_id, trade_symbol, int(units))
+                                            if self.debug:
+                                                print(resp)
                                     except Exception as e:
                                         print(e)
                                 case "Orbit":

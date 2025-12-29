@@ -493,3 +493,14 @@ class Ship:
             "agent": resp["agent"],
             "transaction": transaction
         }
+
+    def deliver(self, contract_id:str, trade_symbol:str, units:int) -> dict:
+        """
+        Deliver some of the cargo to fulfill the contract.
+        Only works if you're there.
+        """
+        resp = self.api.post_auth(f"my/contracts/{contract_id}/deliver", {"shipSymbol": self.symbol, "tradeSymbol": trade_symbol, "units": units})["data"]
+        return {
+            "contract": resp["contract"],
+            "cargo": resp["cargo"]
+        }
