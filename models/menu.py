@@ -1,4 +1,5 @@
 import yaml
+from time import sleep
 from math import dist
 from dataclasses import dataclass
 from enum import Enum
@@ -242,6 +243,7 @@ class Menu:
                                                  "Market",
                                                  "Shipyard",
                                                  "Sell",
+                                                 "Sell All",
                                                  "Dump",
                                                  "Deliver",
                                                  "Orbit",
@@ -370,6 +372,21 @@ class Menu:
                                             self.printer.print_transaction(resp["transaction"])
                                             if self.debug:
                                                 print(resp)
+                                    except Exception as e:
+                                        print(e)
+                                case "Sell All":
+                                    try:
+                                        ship:Ship = self.current_ship
+                                        resp:dict = {}
+                                        for c in ship.cargo.inventory:
+                                            resp = ship.sell_cargo(c.symbol, c.units)
+                                            if self.debug:
+                                                print(resp)
+                                            sleep(5)
+                                        self.current_ship.cargo = resp["cargo"]
+                                        self.printer.print_transaction(resp["transaction"])
+                                        if self.debug:
+                                            print(resp)
                                     except Exception as e:
                                         print(e)
                                 case "Dump":
