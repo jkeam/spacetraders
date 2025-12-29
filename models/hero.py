@@ -8,6 +8,7 @@ from models.contract import Contract
 from models.agent import Agent
 from models.system import System
 from models.shipyard import Shipyard
+from models.account import Account
 
 class Hero:
     """ Class representing the player """
@@ -43,18 +44,27 @@ class Hero:
                 self.api = Spacetrader(self.token, self.account_token, self.debug)
                 self.headquarter = None
                 if self.debug:
+                    print(f"init_from_file: {filename}")
                     print(self)
             except YAMLError as exc:
                 print(exc)
                 print(f"Unable to read from file named {filename}")
 
+        account:Account|None = self.get_account()
+        if account is None:
+            self.token = ""
+            self.api.token = ""
+
         # check for token
         if self.token is None or self.token == "":
+            if self.debug:
+                print("No token")
             if self.account_token is None or self.account_token == "":
                 raise Exception("No valid token nor account token found")
 
             resp = self.api.post_noauth("register", {"symbol": self.callsign, "faction": self.faction})
             if self.debug:
+                print("Response from register")
                 print(resp)
             self.token = resp.get("data", {}).get("token", None)
             self.api.token = self.token
@@ -77,8 +87,23 @@ class Hero:
             else:
                 print("Unable to get token")
 
+    def get_account(self) -> Account|None:
+        try:
+            account_dict = self.api.get_auth("my/account")["data"]
+            return Account(
+                    account_dict["id"],
+                    account_dict["email"],
+                    account_dict["token"],
+                    account_dict["createdAt"],
+            )
+        except Exception as e:
+            print(e)
+            return None
+
     def get_agent(self, lazy_load:bool=False) -> Agent:
         """ Get agent info """
+        if self.debug:
+            print(f"get_agent, lazy_load: {lazy_load}")
         if (not lazy_load) or (lazy_load and self.agent is None):
             info = self.api.get_auth("my/agent")["data"]
             self.agent:Agent = Agent(
