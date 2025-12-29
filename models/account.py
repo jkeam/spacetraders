@@ -7,4 +7,4 @@ class Account:
     id:str
     email:str
     token:str
-    created_at:dt
+    created_at:dt|None

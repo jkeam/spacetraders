@@ -9,6 +9,7 @@ from models.agent import Agent
 from models.system import System
 from models.shipyard import Shipyard
 from models.account import Account
+from datetime import datetime
 
 class Hero:
     """ Class representing the player """
@@ -88,13 +89,17 @@ class Hero:
                 print("Unable to get token")
 
     def get_account(self) -> Account|None:
+        """ Get account """
         try:
-            account_dict = self.api.get_auth("my/account")["data"]
+            account_dict = self.api.get_auth("my/account")["data"]["account"]
+            if self.debug:
+                print("get_account")
+                print(account_dict)
             return Account(
-                    account_dict["id"],
-                    account_dict["email"],
-                    account_dict["token"],
-                    account_dict["createdAt"],
+                    account_dict.get("id", ""),
+                    account_dict.get("email", ""),
+                    account_dict.get("token", ""),
+                    account_dict.get("createdAt", None)
             )
         except Exception as e:
             print(e)
