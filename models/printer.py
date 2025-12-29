@@ -21,6 +21,11 @@ class Printer():
         """ Print list """
         print(tabulate(table, "keys", tablefmt="simple_grid"))
 
+    def print_simple_list(self, header:str, the_list:list[str]) -> None:
+        the_obj:dict[str, list[str]] = {}
+        the_obj[header] = the_list
+        self.print_list(the_obj)
+
     def print_waypoints(self, waypoints:list[Waypoint], distances:list[float]=[]) -> None:
         """ Format and print waypoints """
         ways:list[str] = []

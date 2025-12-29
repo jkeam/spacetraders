@@ -453,6 +453,17 @@ class Menu:
                                     page:int = self.ask_page()
                                     waypoints:list[Waypoint] = self.hero.get_waypoints(system_symbol, "SHIPYARD", page)
                                     self.printer.print_waypoints(waypoints)
+                                    waypoint_names:list[str] = list(map(lambda w: w.waypoint, waypoints))
+                                    waypoint_names.insert(0, "back")
+                                    waypoint:str = self.ask_with_choice(f"Choose waypoint for {system_symbol}", waypoint_names)
+                                    if waypoint != "back":
+                                        print(f"see ships for {waypoint}")
+                                        try:
+                                            shipyard:Shipyard = self.hero.get_shipyard(waypoint)
+                                            if shipyard is not None:
+                                                self.printer.print_simple_list("Ships", shipyard.ship_types)
+                                        except Exception as e:
+                                            print(e)
                                 case "Markets":
                                     page:int = self.ask_page()
                                     waypoints:list[Waypoint] = self.hero.get_waypoints(system_symbol, "MARKETPLACE", page)
