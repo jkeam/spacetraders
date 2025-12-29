@@ -196,13 +196,13 @@ class Market:
         return f"Market(symbol: {self.symbol}, exports: {self.exports}, imports: {self.imports}, exchanges: {self.exchanges}, transactions: {self.transactions}, trade_goods: {self.trade_goods}"
 
     def parse_market(self, raw:dict) -> Market:
-        exports:list[Export] = list(map(lambda x: Export(x["symbol"], x["name"], x["description"]), raw["exports"]))
-        imports:list[Import] = list(map(lambda x: Import(x["symbol"], x["name"], x["description"]), raw["imports"]))
-        exchanges:list[Exchange] = list(map(lambda x: Exchange(x["symbol"], x["name"], x["description"]), raw["exchange"]))
+        exports:list[Export] = list(map(lambda x: Export(x["symbol"], x["name"], x["description"]), raw.get("exports", [])))
+        imports:list[Import] = list(map(lambda x: Import(x["symbol"], x["name"], x["description"]), raw.get("imports", [])))
+        exchanges:list[Exchange] = list(map(lambda x: Exchange(x["symbol"], x["name"], x["description"]), raw.get("exchange", [])))
         transactions:list[Transaction] = []
         trade_goods:list[TradeGood] = []
 
-        for raw_transaction in raw["transactions"]:
+        for raw_transaction in raw.get("transactions", []):
             transactions.append(Transaction(
                 raw_transaction["waypointSymbol"],
                 raw_transaction["shipSymbol"],
@@ -214,7 +214,7 @@ class Market:
                 raw_transaction["timestamp"],
             ))
 
-        for raw_good in raw["tradeGoods"]:
+        for raw_good in raw.get("tradeGoods", []):
             trade_goods.append(TradeGood(
                 raw_good["symbol"],
                 raw_good["type"],
@@ -223,6 +223,7 @@ class Market:
                 raw_good["purchasePrice"],
                 raw_good["sellPrice"],
             ))
+
         self.symbol = raw["symbol"]
         self.exports = exports
         self.imports = imports

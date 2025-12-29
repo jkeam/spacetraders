@@ -263,11 +263,11 @@ class Hero:
         """ Get all the market info """
         system:str = "-".join(waypoint_symbol.split("-")[0:2])
         raw = self.api.get_auth(f"systems/{system}/waypoints/{waypoint_symbol}/market")["data"]
-        if self.debug:
-            print("Get Market")
-            print(raw)
         market:Market = Market()
         market.parse_market(raw)
+        if self.debug:
+            print("Get Market")
+            print(market)
         return market
 
     def buy_ship(self, ship_type:str="SHIP_MINING_DRONE", symbol:str="") -> dict:

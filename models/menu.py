@@ -199,6 +199,8 @@ class Menu:
                                 market:Market|None = self.hero.get_market(self.current_headquarter_waypoint.waypoint)
                                 if market is not None:
                                     self.printer.print_market(market)
+                                else:
+                                    print("Unable to get market")
                             except Exception as e:
                                 print(e)
                         case "update_headquarter_ships":
