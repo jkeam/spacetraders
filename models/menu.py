@@ -422,6 +422,7 @@ class Menu:
                                     if resp is None:
                                         print("Error, most likely need to cooldown")
                                     else:
+                                        self.current_ship.cargo = resp["cargo"]  # update cargo contents
                                         self.printer.print_extraction_results(
                                                 resp["extraction"],
                                                 resp["cooldown"],
