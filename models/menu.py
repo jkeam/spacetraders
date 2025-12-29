@@ -242,6 +242,7 @@ class Menu:
                                                  "Market",
                                                  "Shipyard",
                                                  "Sell",
+                                                 "Dump",
                                                  "Deliver",
                                                  "Orbit",
                                                  "Dock",
@@ -263,15 +264,6 @@ class Menu:
                                     self.printer.print_ship(self.current_ship)
                                 case "Cargo":
                                     self.printer.print_cargo(self.current_ship.cargo)
-                                    is_dump:bool = self.ask("Dump (y/N)?") == "y"
-                                    if is_dump:
-                                            cargo_symbol:str = self.ask("Cargo Symbol")
-                                            units:str = self.ask("Number of Units")
-                                            if self.debug:
-                                                print(f"{cargo_symbol} {units}")
-                                            resp = self.current_ship.dump_cargo(cargo_symbol, int(units))
-                                            if self.debug:
-                                                print(resp)
                                 case "Map":
                                     ship:Ship = self.current_ship
                                     ship_x:int = ship.nav.route.destination.x
@@ -368,19 +360,34 @@ class Menu:
                                         print(e)
                                 case "Sell":
                                     try:
-                                        cargo_symbol:str = self.ask("Cargo Symbol")
-                                        units:str = self.ask("Number of Units")
-                                        if self.debug:
-                                            print(f"{cargo_symbol} {units}")
-                                        resp = self.current_ship.sell_cargo(cargo_symbol, int(units))
-                                        if self.debug:
-                                            print(resp)
+                                        cargo_symbol:str = self.ask("Cargo symbol, cancel to cancel")
+                                        if cargo_symbol != 'cancel':
+                                            units:str = self.ask("Number of units")
+                                            if self.debug:
+                                                print(f"{cargo_symbol} {units}")
+                                            resp = self.current_ship.sell_cargo(cargo_symbol, int(units))
+                                            if self.debug:
+                                                print(resp)
                                     except Exception as e:
+                                        print(e)
+                                case "Dump":
+                                    try:
+                                        cargo_symbol:str = self.ask("Cargo symbol, cancel to cancel")
+                                        if cargo_symbol != 'cancel':
+                                            units:str = self.ask("Number of units")
+                                            if self.debug:
+                                                print(f"{cargo_symbol} {units}")
+                                            resp = self.current_ship.dump_cargo(cargo_symbol, int(units))
+                                            if self.debug:
+                                                print(resp)
+                                    except Exception e:
                                         print(e)
                                 case "Deliver":
                                     try:
-                                        contract_id:str = self.ask("Contract id, cancel to cancel")
-                                        if contract_id != 'cancel':
+                                        contract_ids = list(map(lambda c: c.id, self.hero.get_contracts()))
+                                        cancel_text:str = self.add_back(contract_ids)
+                                        contract_id:str = self.ask_with_choice("Which contract?", contract_ids)
+                                        if contract_id != cancel_text:
                                             trade_symbol:str = self.ask("Trade symbol")
                                             units:str = self.ask("Number of units")
                                             resp = self.current_ship.deliver(contract_id, trade_symbol, int(units))
