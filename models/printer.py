@@ -252,6 +252,7 @@ class Printer():
         names:list[str] = []
         symbols:list[str] = []
         units:list[str] = []
+        print(f"Cargo: {cargo.units} / {cargo.capacity}")
         for c in cargo.inventory:
             names.append(c.name)
             symbols.append(c.symbol)
@@ -264,7 +265,6 @@ class Printer():
 
     def print_extraction_results(self, extraction:ShipExtraction, cooldown:ShipCooldown, cargo:ShipCargo) -> None:
         """ Print extraction results """
-        self.print_cargo(cargo)
         self.print_list({
             "Field": [
                 "Ship",

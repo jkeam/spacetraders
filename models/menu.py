@@ -421,7 +421,6 @@ class Menu:
                                     if resp is None:
                                         print("Error, most likely need to cooldown")
                                     else:
-                                        print("Minable resources remaining")
                                         self.printer.print_extraction_results(
                                                 resp["extraction"],
                                                 resp["cooldown"],
