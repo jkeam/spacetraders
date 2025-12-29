@@ -393,6 +393,7 @@ class Menu:
                                             trade_symbol:str = self.ask("Trade symbol")
                                             units:str = self.ask("Number of units")
                                             resp = self.current_ship.deliver(contract_id, trade_symbol, int(units))
+                                            self.current_ship.cargo = resp["cargo"]
                                             if self.debug:
                                                 print(resp)
                                     except Exception as e:

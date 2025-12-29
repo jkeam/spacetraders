@@ -503,9 +503,13 @@ class Ship:
         Only works if you're there.
         """
         resp = self.api.post_auth(f"my/contracts/{contract_id}/deliver", {"shipSymbol": self.symbol, "tradeSymbol": trade_symbol, "units": units})["data"]
+        cargo:ShipCargo = ShipCargo(
+                resp["cargo"]["capacity"],
+                resp["cargo"]["units"],
+                list(map(lambda i: ShipCargoItem(i["symbol"], i["name"], i["description"], i["units"]), resp["cargo"]["inventory"])))
         return {
             "contract": resp["contract"],
-            "cargo": resp["cargo"]
+            "cargo": cargo
         }
 
     def refresh(self) -> None:
