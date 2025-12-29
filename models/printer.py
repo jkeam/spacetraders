@@ -279,7 +279,7 @@ class Printer():
                 str(extraction.yield_units),
                 str(cooldown.total_seconds),
                 str(cooldown.expiration),
-                f"{str(cargo.capacity)} / {str(cargo.units)}",
+                f"{str(cargo.units)} / {str(cargo.capacity)}",
             ]})
 
     def print_import_export_exchange(self, title:str, the_list:list) -> None:
