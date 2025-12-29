@@ -366,6 +366,8 @@ class Menu:
                                             if self.debug:
                                                 print(f"{cargo_symbol} {units}")
                                             resp = self.current_ship.sell_cargo(cargo_symbol, int(units))
+                                            self.current_ship.cargo = resp["cargo"]
+                                            self.printer.print_transaction(resp["transaction"])
                                             if self.debug:
                                                 print(resp)
                                     except Exception as e:
@@ -380,7 +382,7 @@ class Menu:
                                             resp = self.current_ship.dump_cargo(cargo_symbol, int(units))
                                             if self.debug:
                                                 print(resp)
-                                    except Exception e:
+                                    except Exception as e:
                                         print(e)
                                 case "Deliver":
                                     try:
@@ -406,6 +408,8 @@ class Menu:
                                 case "Refuel":
                                     try:
                                         resp = self.current_ship.refuel()
+                                        self.printer.print_fuel(resp["fuel"])
+                                        self.printer.print_transaction(resp["transaction"])
                                         if self.debug:
                                             print(resp)
                                     except Exception as e:
@@ -418,7 +422,9 @@ class Menu:
                                                 if self.debug:
                                                     print(resp)
                                                 # FIXME: navigate back to listing of all ships since this ship is gone now
-                                                #   Also remove this ship from my list of available ships
+                                                #   below code should do it, but need to test
+                                                self.back_current_choice()
+                                                return True
                                     except Exception as e:
                                         print(e)
                                 case "Extract":

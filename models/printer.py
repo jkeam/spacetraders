@@ -1,6 +1,6 @@
 from tabulate import tabulate
 from models.waypoint import Waypoint
-from models.ship import Ship, ShipExtraction, ShipCooldown, ShipCargo, ShipMount, ShipModule, Market, ShipNav
+from models.ship import Ship, ShipExtraction, ShipCooldown, ShipCargo, ShipMount, ShipModule, Market, ShipNav, Transaction, ShipFuel
 from models.shipyard import Shipyard
 from models.contract import Contract
 from models.agent import Agent
@@ -392,5 +392,45 @@ class Printer():
                 shipyard.symbol,
                 str(shipyard.modifications_fee),
                 "\n".join(shipyard.ship_types),
+            ]
+        })
+
+    def print_transaction(self, transaction:Transaction) -> None:
+        self.print_list({
+            "Field": [
+                "Waypoint Symbol",
+                "Ship Symbol",
+                "Trade Symbol",
+                "Transaction Type",
+                "Units",
+                "Price per Unit",
+                "Total Price",
+                "Bought At",
+            ],
+            "Values": [
+                transaction.waypoint_symbol,
+                transaction.ship_symbol,
+                transaction.trade_symbol,
+                transaction.transaction_type,
+                transaction.units,
+                transaction.price_per_unit,
+                transaction.total_price,
+                str(transaction.bought_at)
+            ]
+        })
+
+    def print_fuel(self, fuel:ShipFuel) -> None:
+        self.print_list({
+            "Field": [
+                "Current Fuel",
+                "Fuel Capacity",
+                "Fuel Consumed",
+                "Consumed At",
+            ],
+            "Values": [
+                fuel.current,
+                fuel.capacity,
+                fuel.consumed,
+                str(fuel.consumed_at),
             ]
         })
