@@ -448,7 +448,7 @@ class Ship:
         market.parse_market(raw)
         return market
 
-    def sell_all_cargo(self, except_symbols:list[str]) -> None:
+    def sell_all_cargo(self, except_symbols:list[str]=[]) -> None:
         """ Sell all cargo """
         for c in self.cargo.inventory:
             if c.symbol not in except_symbols:

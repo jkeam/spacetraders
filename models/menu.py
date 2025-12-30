@@ -376,17 +376,7 @@ class Menu:
                                         print(e)
                                 case "Sell All":
                                     try:
-                                        ship:Ship = self.current_ship
-                                        resp:dict = {}
-                                        for c in ship.cargo.inventory:
-                                            resp = ship.sell_cargo(c.symbol, c.units)
-                                            if self.debug:
-                                                print(resp)
-                                            sleep(5)
-                                        self.current_ship.cargo = resp["cargo"]
-                                        self.printer.print_transaction(resp["transaction"])
-                                        if self.debug:
-                                            print(resp)
+                                        self.current_ship.sell_all_cargo()
                                     except Exception as e:
                                         print(e)
                                 case "Dump":
